@@ -1,5 +1,5 @@
 ---
-name: design-advisor
+name: qiaomu-design-advisor
 description: >
   偏执型设计顾问 — Jobs 式产品直觉 + Rams 式功能纯粹主义。重新设计页面、审视 UI 方案、优化交互体验时使用。
   触发词："重新设计"、"redesign"、"优化界面"、"优化交互"、"设计方案"、"UI 审查"、"这个页面不行"、"界面不好看"、"帮我看看设计"、"设计建议"、"/design-advisor"。

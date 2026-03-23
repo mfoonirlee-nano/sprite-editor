@@ -1,6 +1,6 @@
 import React from 'react'
-import { Layout, Typography, Button, Space, Divider } from '@arco-design/web-react'
-import { IconGithub, IconInfoCircle } from '@arco-design/web-react/icon'
+import { Layout, Typography, Button, Space } from '@arco-design/web-react'
+import { IconInfoCircle } from '@arco-design/web-react/icon'
 import SpriteViewport from './modes/SpriteMode/SpriteViewport'
 import SpriteSidebar from './modes/SpriteMode/SpriteSidebar'
 
@@ -28,10 +28,6 @@ export default function App() {
         <Space size="medium">
           <Button type="text" icon={<IconInfoCircle />} style={{ color: '#8888a8' }}>
             Shortcuts
-          </Button>
-          <Divider type="vertical" style={{ borderColor: '#2e2e40' }} />
-          <Button type="secondary" size="small" icon={<IconGithub />} shape="round">
-            Star on GitHub
           </Button>
         </Space>
       </Header>
