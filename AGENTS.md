@@ -3,10 +3,11 @@
 ## ⛔ Hard Rules (Must follow on every task, no exceptions)
 
 1. **STOP — Do NOT write code directly.** After receiving any development task, the first step is to read the relevant docs from the "Repository Knowledge Map" below to understand existing architecture and context.
-2. **Docs before code.** If a task requires a Design Doc or Exec Plan (see criteria below), you must **create it and get user confirmation first** before writing any code.
-3. **Plan before execute.** Present what files you plan to change, why, and how. **Wait for explicit user approval** before making changes.
-4. **Self-review + update docs after completion.** After code changes, you must run the "Pre-delivery Self-review" checklist and show results, then update all affected docs (see "Development Workflow" section). Skipping either step means the task is incomplete.
-5. **Tests first.** When working on core business logic, you must write tests first, confirm they fail, then write the implementation (see "TDD Discipline" section).
+2. **Check Local Skills.** Before starting execution, you MUST traverse the `skills/` directory to discover available custom agent skills, and strictly follow/invoke them if they are relevant to the user's request.
+3. **Docs before code.** If a task requires a Design Doc or Exec Plan (see criteria below), you must **create it and get user confirmation first** before writing any code.
+4. **Plan before execute.** Present what files you plan to change, why, and how. **Wait for explicit user approval** before making changes.
+5. **Self-review + update docs after completion.** After code changes, you must run the "Pre-delivery Self-review" checklist and show results, then update all affected docs (see "Development Workflow" section). Skipping either step means the task is incomplete.
+6. **Tests first.** When working on core business logic, you must write tests first, confirm they fail, then write the implementation (see "TDD Discipline" section).
 
 > Violating any of the above = failure. Better to ask one more question than to skip documentation.
 
@@ -98,7 +99,7 @@ Test file headers must reference the associated spec source, ensuring every test
 
 > Knowledge the agent can't see doesn't exist. All decisions, proposals, and context must live in `docs/`, not in conversation or memory.
 
-**Before starting a task — read docs first:** Check the "Repository Knowledge Map" above, find and read relevant docs before starting work.
+**Before starting a task — read docs first:** Check the "Repository Knowledge Map" above, find and read relevant docs before starting work. Additionally, you MUST check the `skills/` directory for any custom agent skills that could help complete the task.
 
 **After completing a task — must update docs:**
 
