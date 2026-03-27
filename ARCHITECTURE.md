@@ -1,22 +1,21 @@
 # Architecture
 
-> This document is the architecture map of the codebase.
-> The agent should understand module structure and dependency rules here before diving into specific code.
+> This document describes the current codebase structure.
 >
-> **Last updated**: YYYY-MM-DD
+> **Last updated**: 2026-03-27
 
 ---
 
 ## High-level Architecture
 
-The Sprite Editor is a pure client-side web application built in a single HTML file (`sprite-editor.html`). 
-It relies heavily on the HTML5 Canvas API for rendering images and pixel data, and uses vanilla JavaScript to handle user interactions, state management, and file exports.
+Sprite Editor is a client-side React application built with Vite and TypeScript.
+It uses HTML5 Canvas for sprite rendering and editing, while React components manage layout, controls, and interaction state.
 
 ```text
-User Input (UI Controls, Mouse Events) 
-  → State Management (Vanilla JS variables)
-  → Rendering Engine (HTML5 Canvas)
-  → Export/Download (Browser Blob API)
+User Input
+  → React Components / Hooks
+  → Sprite editor state controller
+  → Canvas rendering + export
 ```
 
 ---
@@ -25,31 +24,42 @@ User Input (UI Controls, Mouse Events)
 
 ```text
 /
-├── sprite-editor.html  # The entire application (UI, CSS styles, and JS logic)
-├── package.json        # Project metadata
-└── README.md           # Project documentation
+├── index.html
+├── src/
+│   ├── App.tsx                 # app shell and shared controller wiring
+│   ├── main.tsx                # React entrypoint
+│   ├── modes/SpriteMode/
+│   │   ├── useSpriteSheet.ts   # core sprite editor state and canvas logic
+│   │   ├── SpriteViewport.tsx  # viewport interactions and canvas surface
+│   │   └── SpriteSidebar.tsx   # controls, preview, export, edit actions
+│   └── styles/                 # global styles
+├── package.json
+└── README.md
 ```
 
 ---
 
 ## Layering Rules
 
-Because the project is encapsulated within a single HTML file, there are no strict multi-file layering rules. However, the logical separation within `sprite-editor.html` is:
-1.  **HTML Structure**: Defines the layout and UI components.
-2.  **CSS Styling**: Defines the dark theme and responsive layout.
-3.  **JavaScript Logic**: Handles event listeners, canvas manipulation, and state updates.
+1. `src/main.tsx` boots the React app.
+2. `src/App.tsx` owns shared `useSpriteSheet()` state and passes the controller into mode components.
+3. `useSpriteSheet.ts` owns editor state, canvas drawing, and destructive edit operations.
+4. UI components should reuse controller methods instead of duplicating canvas logic.
 
 ---
 
 ## Cross-cutting Concerns
 
-- **State Management**: Handled via global variables within the script tag.
-- **Rendering**: Optimized for pixel art using `image-rendering: pixelated`.
-- **File Handling**: Uses the FileReader API for importing images and the Blob/URL APIs for exporting generated sprite sheets or frames.
+- **Rendering**: Canvas output uses `image-rendering: pixelated` for sprite clarity.
+- **Editing pipeline**: destructive edits are written to `editCanvas`; the displayed/exported source is resolved via `getDrawableSource()`.
+- **Interaction**: pointer-based viewport interactions handle pan, selection, lasso, movement, zoom, and sampling.
+- **Build tooling**: Vite handles dev/build, TypeScript provides type checking.
 
 ---
 
 ## Key Conventions
 
-- **Zero Dependencies**: The project must remain dependency-free (no npm packages, no build steps).
-- **Vanilla JS**: All logic must be written in standard, modern JavaScript supported by modern browsers.
+- This is a React/Vite project, not a zero-dependency single-file app.
+- Shared editor state should be created once and passed down, not instantiated separately per panel.
+- Canvas-related behavior belongs in `useSpriteSheet.ts`; view components should stay thin.
+- Prefer updating existing files over creating new abstractions unless required.

@@ -1,17 +1,60 @@
-import React, { useRef, useEffect } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { Button, InputNumber, Switch, Tooltip } from '@arco-design/web-react'
-import { IconPlayArrow, IconPause, IconDownload, IconDragDotVertical, IconUpload, IconDragArrow, IconFullscreen, IconPenFill } from '@arco-design/web-react/icon'
-import { useSpriteSheet } from './useSpriteSheet'
+import { IconPlayArrow, IconPause, IconDownload, IconDragDotVertical, IconUpload, IconDragArrow, IconFullscreen, IconPenFill, IconRefresh } from '@arco-design/web-react/icon'
+import type { ResizeAnchor, SpriteSheetController } from './useSpriteSheet'
 
-export default function SpriteSidebar() {
-  const { s, setS, loadImage, updateGridCanvas, previewRef } = useSpriteSheet()
+interface SpriteSidebarProps {
+  spriteSheet: SpriteSheetController
+}
+
+const clampPositive = (value: number | null | undefined, fallback: number) => Math.max(1, Number(value) || fallback)
+const clampTolerance = (value: number | null | undefined) => Math.min(255, Math.max(0, Number(value) || 0))
+const defaultResizeAnchor: ResizeAnchor = { x: 'center', y: 'middle' }
+const resizeAnchorRows: ResizeAnchor['y'][] = ['top', 'middle', 'bottom']
+const resizeAnchorCols: ResizeAnchor['x'][] = ['left', 'center', 'right']
+
+const traceSelectionPath = (ctx: CanvasRenderingContext2D, sel: NonNullable<SpriteSheetController['s']['sel']>) => {
+  ctx.beginPath()
+  if (sel.points?.length) {
+    sel.points.forEach((point, index) => {
+      const x = point.x - sel.x
+      const y = point.y - sel.y
+      if (index === 0) {
+        ctx.moveTo(x, y)
+      } else {
+        ctx.lineTo(x, y)
+      }
+    })
+    ctx.closePath()
+    return
+  }
+  ctx.rect(0, 0, sel.w, sel.h)
+}
+
+export default function SpriteSidebar({ spriteSheet }: SpriteSidebarProps) {
+  const {
+    s,
+    setS,
+    loadImage,
+    previewRef,
+    getDrawableSource,
+    setBackgroundPickMode,
+    autoRemoveBackground,
+    applyBackgroundRemoval,
+    resetEdits,
+    resizeCanvas,
+  } = spriteSheet
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const [resizeWidth, setResizeWidth] = useState(1)
+  const [resizeHeight, setResizeHeight] = useState(1)
+  const [resizeAnchor, setResizeAnchor] = useState<ResizeAnchor>(defaultResizeAnchor)
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
-    if (!file) return
+    if (!file || !file.type.startsWith('image/')) return
     const url = URL.createObjectURL(file)
     loadImage(url)
+    e.target.value = ''
   }
 
   const handleDrop = (e: React.DragEvent) => {
@@ -22,7 +65,7 @@ export default function SpriteSidebar() {
     loadImage(url)
   }
 
-  React.useEffect(() => {
+  useEffect(() => {
     const onPaste = (e: ClipboardEvent) => {
       const items = e.clipboardData?.items
       if (!items) return
@@ -37,17 +80,42 @@ export default function SpriteSidebar() {
         }
       }
     }
-    window.addEventListener('paste', onPaste as any)
-    return () => window.removeEventListener('paste', onPaste as any)
+    window.addEventListener('paste', onPaste)
+    return () => window.removeEventListener('paste', onPaste)
   }, [loadImage])
 
+  useEffect(() => {
+    const source = getDrawableSource()
+    if (!source) return
+    const width = 'naturalWidth' in source ? source.naturalWidth : source.width
+    const height = 'naturalHeight' in source ? source.naturalHeight : source.height
+    setResizeWidth(width)
+    setResizeHeight(height)
+  }, [s.img, s.editCanvas])
+
+  const hasExportableSelection = !!s.sel && Math.round(s.sel.w) > 0 && Math.round(s.sel.h) > 0
+  const hasBgSample = !!s.bgSampleColor
+  const resizeDisabled = !s.img || s.movingSel
+
   const exportSelection = () => {
-    if (!s.img || !s.sel) return
+    const source = getDrawableSource()
+    if (!source || !s.sel || !hasExportableSelection) return
     const ec = document.createElement('canvas')
     ec.width = Math.round(s.sel.w)
     ec.height = Math.round(s.sel.h)
-    const ec2 = ec.getContext('2d')!
-    ec2.drawImage(s.img, s.sel.x, s.sel.y, s.sel.w, s.sel.h, 0, 0, s.sel.w, s.sel.h)
+    const ec2 = ec.getContext('2d')
+    if (!ec2) return
+
+    if (s.sel.points?.length) {
+      ec2.save()
+      traceSelectionPath(ec2, s.sel)
+      ec2.clip()
+      ec2.drawImage(source, -s.sel.x, -s.sel.y)
+      ec2.restore()
+    } else {
+      ec2.drawImage(source, s.sel.x, s.sel.y, s.sel.w, s.sel.h, 0, 0, s.sel.w, s.sel.h)
+    }
+
     const a = document.createElement('a')
     a.href = ec.toDataURL('image/png')
     a.download = 'selection.png'
@@ -55,15 +123,18 @@ export default function SpriteSidebar() {
   }
 
   const exportFrame = () => {
-    if (!s.img) return
+    const source = getDrawableSource()
+    if (!source) return
     const ec = document.createElement('canvas')
     ec.width = s.fw
     ec.height = s.fh
-    const ec2 = ec.getContext('2d')!
-    const c = Math.max(1, Math.floor((s.img.naturalWidth - s.ox) / s.fw))
+    const ec2 = ec.getContext('2d')
+    if (!ec2) return
+    const sourceWidth = 'naturalWidth' in source ? source.naturalWidth : source.width
+    const c = Math.max(1, Math.floor((sourceWidth - s.ox) / s.fw))
     const col = s.currentFrame % c
     const row = Math.floor(s.currentFrame / c)
-    ec2.drawImage(s.img, s.ox + col * s.fw, s.oy + row * s.fh, s.fw, s.fh, 0, 0, s.fw, s.fh)
+    ec2.drawImage(source, s.ox + col * s.fw, s.oy + row * s.fh, s.fw, s.fh, 0, 0, s.fw, s.fh)
     const a = document.createElement('a')
     a.href = ec.toDataURL('image/png')
     a.download = `frame_${s.currentFrame}.png`
@@ -72,14 +143,13 @@ export default function SpriteSidebar() {
 
   return (
     <div className="flex flex-col gap-4 overflow-y-auto h-full pr-2 text-[13px] custom-scroll">
-      {/* 优化后的分段控制风格工具栏 */}
       <div className="flex bg-[#101014] p-1 rounded-lg border border-[#292933] shadow-inner w-full">
         <Tooltip content="Pan Tool (V)">
           <button
             className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-md text-xs transition-all duration-200 ${
               s.tool === 'pan' ? 'bg-[#292933] text-white shadow-sm' : 'text-[#8b8b99] hover:text-[#ececf1] hover:bg-[#1f1f26]'
             }`}
-            onClick={() => setS(prev => ({ ...prev, tool: 'pan' }))}
+            onClick={() => setS(prev => ({ ...prev, tool: 'pan', selType: 'rect' }))}
           >
             <IconDragArrow /> Pan
           </button>
@@ -89,7 +159,7 @@ export default function SpriteSidebar() {
             className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-md text-xs transition-all duration-200 ${
               s.tool === 'select' ? 'bg-[#292933] text-white shadow-sm' : 'text-[#8b8b99] hover:text-[#ececf1] hover:bg-[#1f1f26]'
             }`}
-            onClick={() => setS(prev => ({ ...prev, tool: 'select' }))}
+            onClick={() => setS(prev => ({ ...prev, tool: 'select', selType: 'rect' }))}
           >
             <IconFullscreen /> Rect
           </button>
@@ -99,7 +169,7 @@ export default function SpriteSidebar() {
             className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-md text-xs transition-all duration-200 ${
               s.tool === 'lasso' ? 'bg-[#292933] text-white shadow-sm' : 'text-[#8b8b99] hover:text-[#ececf1] hover:bg-[#1f1f26]'
             }`}
-            onClick={() => setS(prev => ({ ...prev, tool: 'lasso' }))}
+            onClick={() => setS(prev => ({ ...prev, tool: 'lasso', selType: 'lasso' }))}
           >
             <IconPenFill /> Lasso
           </button>
@@ -124,29 +194,99 @@ export default function SpriteSidebar() {
         <>
           <div className="bg-[#16161a] p-4 rounded-xl border border-[#292933] shadow-sm">
             <div className="text-[11px] font-bold text-[#8b8b99] tracking-wider uppercase mb-3 flex items-center gap-1">
+              <span className="text-xs font-mono">BG</span> Background Removal
+            </div>
+            <div className="flex items-center gap-3 mb-3">
+              <div className="text-[11px] text-[#8b8b99] shrink-0">Sample</div>
+              <div className="w-8 h-8 rounded border border-[#292933]" style={{ backgroundColor: s.bgSampleColor ? `rgb(${s.bgSampleColor.r}, ${s.bgSampleColor.g}, ${s.bgSampleColor.b})` : 'transparent' }} />
+              <div className="text-[11px] text-[#8b8b99] font-mono">
+                {s.bgSampleColor ? `${s.bgSampleColor.r}, ${s.bgSampleColor.g}, ${s.bgSampleColor.b}` : 'No sample'}
+              </div>
+            </div>
+            <div className="mb-3">
+              <div className="text-[11px] text-[#8b8b99] mb-1.5 pl-1">Tolerance</div>
+              <InputNumber size="small" value={s.bgRemovalTolerance} min={0} max={255} onChange={(v) => setS(prev => ({ ...prev, bgRemovalTolerance: clampTolerance(v) }))} className="bg-[#101014] border-[#292933] hover:border-[#7c6af7] w-full" />
+            </div>
+            <div className="grid grid-cols-2 gap-2 mb-2">
+              <Button size="small" type="primary" icon={<span className="text-xs font-mono">BG</span>} onClick={autoRemoveBackground}>Auto Remove</Button>
+              <Button size="small" icon={<span className="text-xs font-mono">BG</span>} type={s.bgPickMode ? 'primary' : 'secondary'} onClick={() => setBackgroundPickMode(!s.bgPickMode)}>
+                {s.bgPickMode ? 'Picking...' : 'Pick Color'}
+              </Button>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <Button size="small" disabled={!hasBgSample} onClick={() => applyBackgroundRemoval()}>Apply Sample</Button>
+              <Button size="small" icon={<IconRefresh />} onClick={resetEdits}>Reset Image</Button>
+            </div>
+            {s.bgPickMode && (
+              <div className="text-[11px] text-[#8b8b99] mt-2">Click image in viewport to sample background color.</div>
+            )}
+          </div>
+
+          <div className="bg-[#16161a] p-4 rounded-xl border border-[#292933] shadow-sm">
+            <div className="text-[11px] font-bold text-[#8b8b99] tracking-wider uppercase mb-3 flex items-center gap-1">
+              <IconDragDotVertical /> Canvas Size
+            </div>
+            <div className="grid grid-cols-2 gap-3 mb-3">
+              <div>
+                <div className="text-[11px] text-[#8b8b99] mb-1.5 pl-1">Width</div>
+                <InputNumber size="small" value={resizeWidth} min={1} onChange={(v) => setResizeWidth(clampPositive(v, resizeWidth || 1))} className="bg-[#101014] border-[#292933] hover:border-[#7c6af7]" />
+              </div>
+              <div>
+                <div className="text-[11px] text-[#8b8b99] mb-1.5 pl-1">Height</div>
+                <InputNumber size="small" value={resizeHeight} min={1} onChange={(v) => setResizeHeight(clampPositive(v, resizeHeight || 1))} className="bg-[#101014] border-[#292933] hover:border-[#7c6af7]" />
+              </div>
+            </div>
+            <div className="mb-3">
+              <div className="text-[11px] text-[#8b8b99] mb-2 pl-1">Anchor</div>
+              <div className="grid grid-cols-3 gap-1.5">
+                {resizeAnchorRows.flatMap((row) => resizeAnchorCols.map((col) => {
+                  const active = resizeAnchor.x === col && resizeAnchor.y === row
+                  return (
+                    <button
+                      key={`${row}-${col}`}
+                      type="button"
+                      className={`h-8 rounded-md border text-[11px] font-medium transition-all ${active ? 'border-[#7c6af7] bg-[#7c6af7]/20 text-white' : 'border-[#292933] bg-[#101014] text-[#8b8b99] hover:border-[#7c6af7] hover:text-[#ececf1]'}`}
+                      onClick={() => setResizeAnchor({ x: col, y: row })}
+                    >
+                      {row === 'middle' ? 'M' : row[0].toUpperCase()}{col[0].toUpperCase()}
+                    </button>
+                  )
+                }))}
+              </div>
+            </div>
+            <Button size="small" type="primary" disabled={resizeDisabled} onClick={() => resizeCanvas(resizeWidth, resizeHeight, resizeAnchor)} className="w-full">
+              Apply Canvas Resize
+            </Button>
+            {s.movingSel && (
+              <div className="text-[11px] text-[#8b8b99] mt-2">Finish moving the selection before resizing the canvas.</div>
+            )}
+          </div>
+
+          <div className="bg-[#16161a] p-4 rounded-xl border border-[#292933] shadow-sm">
+            <div className="text-[11px] font-bold text-[#8b8b99] tracking-wider uppercase mb-3 flex items-center gap-1">
               <IconDragDotVertical /> Frame Settings
             </div>
             <div className="grid grid-cols-2 gap-3 mb-3">
               <div>
                 <div className="text-[11px] text-[#8b8b99] mb-1.5 pl-1">Width</div>
-                <InputNumber size="small" value={s.fw} onChange={(v) => { setS(prev => ({ ...prev, fw: Number(v) || 64 })); updateGridCanvas() }} className="bg-[#101014] border-[#292933] hover:border-[#7c6af7]" />
+                <InputNumber size="small" value={s.fw} onChange={(v) => { setS(prev => ({ ...prev, fw: clampPositive(v, 64) })) }} className="bg-[#101014] border-[#292933] hover:border-[#7c6af7]" />
               </div>
               <div>
                 <div className="text-[11px] text-[#8b8b99] mb-1.5 pl-1">Height</div>
-                <InputNumber size="small" value={s.fh} onChange={(v) => { setS(prev => ({ ...prev, fh: Number(v) || 64 })); updateGridCanvas() }} className="bg-[#101014] border-[#292933] hover:border-[#7c6af7]" />
+                <InputNumber size="small" value={s.fh} onChange={(v) => { setS(prev => ({ ...prev, fh: clampPositive(v, 64) })) }} className="bg-[#101014] border-[#292933] hover:border-[#7c6af7]" />
               </div>
               <div>
                 <div className="text-[11px] text-[#8b8b99] mb-1.5 pl-1">Frames</div>
-                <InputNumber size="small" value={s.fcount} onChange={(v) => { setS(prev => ({ ...prev, fcount: Number(v) || 1 })); updateGridCanvas() }} className="bg-[#101014] border-[#292933] hover:border-[#7c6af7]" />
+                <InputNumber size="small" value={s.fcount} onChange={(v) => { setS(prev => ({ ...prev, fcount: clampPositive(v, 1), currentFrame: Math.min(prev.currentFrame, clampPositive(v, 1) - 1) })) }} className="bg-[#101014] border-[#292933] hover:border-[#7c6af7]" />
               </div>
               <div>
                 <div className="text-[11px] text-[#8b8b99] mb-1.5 pl-1">FPS</div>
-                <InputNumber size="small" value={s.fps} onChange={(v) => setS(prev => ({ ...prev, fps: Number(v) || 10 }))} className="bg-[#101014] border-[#292933] hover:border-[#7c6af7]" />
+                <InputNumber size="small" value={s.fps} onChange={(v) => setS(prev => ({ ...prev, fps: clampPositive(v, 10) }))} className="bg-[#101014] border-[#292933] hover:border-[#7c6af7]" />
               </div>
             </div>
             <div className="flex items-center justify-between pt-2 border-t border-[#292933]/50">
               <span className="text-xs text-[#ececf1] pl-1">Show Grid</span>
-              <Switch size="small" checked={s.showGrid} onChange={(v) => { setS(prev => ({ ...prev, showGrid: v })); updateGridCanvas() }} />
+              <Switch size="small" checked={s.showGrid} onChange={(v) => { setS(prev => ({ ...prev, showGrid: v })) }} />
             </div>
           </div>
 
@@ -154,20 +294,20 @@ export default function SpriteSidebar() {
             <div className="text-[11px] font-bold text-[#8b8b99] tracking-wider uppercase mb-3 flex items-center gap-1">
               <IconDragDotVertical /> Preview & Animation
             </div>
-            
+
             <div className="flex justify-center p-3 preview-canvas-bg border border-[#292933] rounded-lg min-h-[120px] mb-3 relative group">
               <canvas ref={previewRef} style={{ imageRendering: 'pixelated', maxWidth: '100%', maxHeight: '100%' }} />
               <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                <Button 
-                  shape="circle" 
-                  size="small" 
-                  type={s.isPlaying ? 'secondary' : 'primary'} 
-                  icon={s.isPlaying ? <IconPause /> : <IconPlayArrow />} 
-                  onClick={() => setS(prev => ({ ...prev, isPlaying: !prev.isPlaying, timer: 0 }))} 
+                <Button
+                  shape="circle"
+                  size="small"
+                  type={s.isPlaying ? 'secondary' : 'primary'}
+                  icon={s.isPlaying ? <IconPause /> : <IconPlayArrow />}
+                  onClick={() => setS(prev => ({ ...prev, isPlaying: !prev.isPlaying, timer: 0 }))}
                 />
               </div>
             </div>
-            
+
             <div className="flex flex-wrap gap-1.5 max-h-[140px] overflow-y-auto custom-scroll pr-1">
               {Array.from({ length: s.fcount }).map((_, i) => (
                 <div
@@ -179,14 +319,17 @@ export default function SpriteSidebar() {
                     width={s.fw}
                     height={s.fh}
                     ref={(el) => {
-                      if (!el || !s.img) return
-                      const fc2 = el.getContext('2d')!
-                      const c = Math.max(1, Math.floor((s.img.naturalWidth - s.ox) / s.fw))
+                      const source = getDrawableSource()
+                      if (!el || !source) return
+                      const fc2 = el.getContext('2d')
+                      if (!fc2) return
+                      const sourceWidth = 'naturalWidth' in source ? source.naturalWidth : source.width
+                      const c = Math.max(1, Math.floor((sourceWidth - s.ox) / s.fw))
                       const col = i % c
                       const row = Math.floor(i / c)
                       fc2.clearRect(0, 0, s.fw, s.fh)
                       fc2.imageSmoothingEnabled = false
-                      fc2.drawImage(s.img, s.ox + col * s.fw, s.oy + row * s.fh, s.fw, s.fh, 0, 0, s.fw, s.fh)
+                      fc2.drawImage(source, s.ox + col * s.fw, s.oy + row * s.fh, s.fw, s.fh, 0, 0, s.fw, s.fh)
                     }}
                     className="w-full h-full"
                     style={{ imageRendering: 'pixelated' }}
@@ -204,7 +347,7 @@ export default function SpriteSidebar() {
               <IconDragDotVertical /> Export
             </div>
             <div className="flex gap-2">
-              <Button size="small" icon={<IconDownload />} onClick={exportSelection} disabled={!s.sel} className="flex-1 bg-[#1f1f26] border-[#292933] text-[#ececf1] hover:bg-[#292933]">Selection</Button>
+              <Button size="small" icon={<IconDownload />} onClick={exportSelection} disabled={!hasExportableSelection} className="flex-1 bg-[#1f1f26] border-[#292933] text-[#ececf1] hover:bg-[#292933]">Selection</Button>
               <Button size="small" icon={<IconDownload />} onClick={exportFrame} className="flex-1 bg-[#1f1f26] border-[#292933] text-[#ececf1] hover:bg-[#292933]">Current Frame</Button>
             </div>
           </div>

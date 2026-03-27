@@ -3,11 +3,38 @@ import { Layout, Typography, Button, Space } from '@arco-design/web-react'
 import { IconInfoCircle } from '@arco-design/web-react/icon'
 import SpriteViewport from './modes/SpriteMode/SpriteViewport'
 import SpriteSidebar from './modes/SpriteMode/SpriteSidebar'
+import { useSpriteSheet } from './modes/SpriteMode/useSpriteSheet'
 
 const { Header, Sider, Content } = Layout
 const { Title, Text } = Typography
 
 export default function App() {
+  const spriteSheet = useSpriteSheet()
+
+  React.useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null
+      if (target) {
+        const tagName = target.tagName
+        if (target.isContentEditable || tagName === 'INPUT' || tagName === 'TEXTAREA' || tagName === 'SELECT') {
+          return
+        }
+      }
+
+      const key = e.key.toLowerCase()
+      if (key === 'v' || key === 's' || key === 'l') {
+        spriteSheet.setS((prev) => ({
+          ...prev,
+          tool: key === 'v' ? 'pan' : key === 's' ? 'select' : 'lasso',
+          selType: key === 'l' ? 'lasso' : 'rect',
+        }))
+      }
+    }
+
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [spriteSheet])
+
   return (
     <Layout className="h-screen bg-[#0f0f13] text-[#e8e8f0] overflow-hidden">
       <Header className="h-14 border-b border-[#2e2e40] bg-[#1a1a22] flex items-center justify-between px-6 shrink-0">
@@ -24,24 +51,24 @@ export default function App() {
             </Text>
           </div>
         </div>
-        
+
         <Space size="medium">
           <Button type="text" icon={<IconInfoCircle />} style={{ color: '#8888a8' }}>
             Shortcuts
           </Button>
         </Space>
       </Header>
-      
+
       <Layout className="flex-1 overflow-hidden relative">
-        <Sider 
-          width={340} 
+        <Sider
+          width={340}
           className="border-r border-[#2e2e40] bg-[#12121a] flex flex-col shrink-0"
         >
-          <SpriteSidebar />
+          <SpriteSidebar spriteSheet={spriteSheet} />
         </Sider>
-        
+
         <Content className="bg-[#0f0f13] relative overflow-hidden flex flex-col">
-          <SpriteViewport />
+          <SpriteViewport spriteSheet={spriteSheet} />
         </Content>
       </Layout>
     </Layout>
