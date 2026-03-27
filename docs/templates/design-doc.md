@@ -2,7 +2,7 @@
 
 > **Created**: YYYY-MM-DD
 > **Last updated**: YYYY-MM-DD
-> **Status**: Draft | Adopted | Deprecated
+> **Status**: Draft | Adopted | Deprecated | Implemented
 > **Impact scope**: [Affected modules/domains]
 
 ---
@@ -15,37 +15,37 @@
 
 ### Preconditions
 
-- [What must be true before invoking this functionality? e.g., user is authenticated, resource exists, sufficient quota]
+- [What must be true before using this behavior? e.g., image is loaded, selection exists, browser capability is available]
 
 ### Postconditions
 
-- **P1**: [On success — system state change. e.g., record written to database]
-- **P2**: [On success — return value. e.g., returns `ApiResult<Entity>`]
-- **P3**: [On failure — system state. e.g., operation rolled back, returns error]
+- **P1**: [On success — observable state or UI change. e.g., selected pixels become transparent]
+- **P2**: [On success — returned value or visible behavior. e.g., preview updates]
+- **P3**: [On failure — state remains safe / no partial commit]
 
 ### Invariants
 
-- [What conditions hold true throughout the entire operation?]
+- [What conditions must remain true throughout the operation?]
 
 ## Edge Case Catalog
 
-| ID   | Scenario               | Input                                 | Expected Behavior                    |
-| ---- | ---------------------- | ------------------------------------- | ------------------------------------ |
-| B1   | Empty input            | `null` / `""`                         | Return validation error              |
-| B2   | Oversized input        | Exceeds limit                         | Reject with message                  |
-| B3   | No permission          | Unauthorized caller                   | Return permission error              |
-| B4   | Concurrent operation   | Same resource modified simultaneously | Later writer receives conflict error |
-| B5   | Resource not found     | Invalid ID                            | Return not-found error               |
-| _B6_ | _[Add more as needed]_ |                                       |                                      |
+| ID   | Scenario | Input / Condition | Expected Behavior |
+| ---- | -------- | ----------------- | ----------------- |
+| B1   | Empty or missing input | No image / null value | Reject or no-op safely |
+| B2   | Oversized input | Large image or heavy interaction | Remains stable or degrades safely |
+| B3   | Invalid interaction state | Action triggered in the wrong mode | Ignore or prevent invalid transition |
+| B4   | Rapid repeated action | Repeated clicks / shortcut spam | State stays consistent |
+| B5   | Data out of bounds | Coordinates outside image bounds | Clamp or reject safely |
+| _B6_ | _[Add more as needed]_ | | |
 
 ## Error Patterns
 
-| Error Type             | Trigger Condition      | Caller-facing Response | System Behavior                   |
-| ---------------------- | ---------------------- | ---------------------- | --------------------------------- |
-| Validation error       | Input fails schema     | Error message returned | Request rejected, no side effects |
-| Permission error       | Caller lacks access    | Permission denied      | Request rejected, logged          |
-| Not found              | Resource doesn't exist | Not-found response     | Request rejected                  |
-| _[Add more as needed]_ |                        |                        |                                   |
+| Error Type | Trigger Condition | Caller-facing Response | System Behavior |
+| ---------- | ----------------- | ---------------------- | --------------- |
+| Validation error | Input or state fails preconditions | Clear feedback or safe no-op | No invalid side effects |
+| Runtime error | Browser API / canvas op fails | Operation aborts | Existing state preserved where possible |
+| Not found / unavailable | Required resource or state missing | Feature does not proceed | No partial mutation |
+| _[Add more as needed]_ | | | |
 
 ## Proposal
 
@@ -60,5 +60,5 @@
 [How to determine success? Each criterion should map to a behavioral contract postcondition or edge case above]
 
 1. [ ] [Criterion 1 — maps to P1]
-2. [ ] [Criterion 2 — maps to B1, B2]
+2. [ ] [Criterion 2 — maps to B1/B2]
 3. [ ] ...

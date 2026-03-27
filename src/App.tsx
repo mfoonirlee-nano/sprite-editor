@@ -22,6 +22,14 @@ export default function App() {
       }
 
       const key = e.key.toLowerCase()
+      if ((e.metaKey || e.ctrlKey) && !e.shiftKey && key === 'z') {
+        if (spriteSheet.canUndo && !spriteSheet.s.movingSel) {
+          e.preventDefault()
+          spriteSheet.undo()
+        }
+        return
+      }
+
       if (key === 'v' || key === 's' || key === 'l') {
         spriteSheet.setS((prev) => ({
           ...prev,

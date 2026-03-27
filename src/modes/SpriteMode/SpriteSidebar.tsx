@@ -35,12 +35,14 @@ export default function SpriteSidebar({ spriteSheet }: SpriteSidebarProps) {
   const {
     s,
     setS,
+    canUndo,
     loadImage,
     previewRef,
     getDrawableSource,
     setBackgroundPickMode,
     autoRemoveBackground,
     applyBackgroundRemoval,
+    undo,
     resetEdits,
     resizeCanvas,
   } = spriteSheet
@@ -95,6 +97,7 @@ export default function SpriteSidebar({ spriteSheet }: SpriteSidebarProps) {
 
   const hasExportableSelection = !!s.sel && Math.round(s.sel.w) > 0 && Math.round(s.sel.h) > 0
   const hasBgSample = !!s.bgSampleColor
+  const undoDisabled = !canUndo || s.movingSel
   const resizeDisabled = !s.img || s.movingSel
 
   const exportSelection = () => {
@@ -193,8 +196,13 @@ export default function SpriteSidebar({ spriteSheet }: SpriteSidebarProps) {
       {s.img && (
         <>
           <div className="bg-[#16161a] p-4 rounded-xl border border-[#292933] shadow-sm">
-            <div className="text-[11px] font-bold text-[#8b8b99] tracking-wider uppercase mb-3 flex items-center gap-1">
-              <span className="text-xs font-mono">BG</span> Background Removal
+            <div className="flex items-center justify-between gap-2 mb-3">
+              <div className="text-[11px] font-bold text-[#8b8b99] tracking-wider uppercase flex items-center gap-1">
+                <span className="text-xs font-mono">BG</span> Background Removal
+              </div>
+              <Tooltip content="Undo (Cmd/Ctrl+Z)">
+                <Button size="small" disabled={undoDisabled} onClick={undo}>Undo</Button>
+              </Tooltip>
             </div>
             <div className="flex items-center gap-3 mb-3">
               <div className="text-[11px] text-[#8b8b99] shrink-0">Sample</div>

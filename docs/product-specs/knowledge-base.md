@@ -1,42 +1,59 @@
 # Knowledge Base
 
-> Core feature descriptions, key file paths, and data model.
-> The agent uses this to understand what the product does and where things live.
+> Core feature descriptions, key file paths, and current state model.
+> The agent uses this to understand what the product does and where the implementation lives.
 >
-> **Last updated**: YYYY-MM-DD
+> **Last updated**: 2026-03-27
 
 ---
 
 ## Features
 
-### Image Import & Parsing
-- **Description**: Imports images via drag-and-drop or file selection and renders them onto the main canvas.
-- **Key files**: `sprite-editor.html` (FileReader logic)
+### Image Import
+- **Description**: Import images through click-to-upload, drag-and-drop, or paste.
+- **Key files**: `src/modes/SpriteMode/SpriteSidebar.tsx`, `src/modes/SpriteMode/useSpriteSheet.ts`
 - **Status**: Active
 
-### Sprite Parameter Configuration
-- **Description**: Allows users to configure sprite dimensions (width, height, offsets, FPS).
-- **Key files**: `sprite-editor.html` (Input handlers)
+### Viewport Navigation & Selection
+- **Description**: Supports pan, wheel zoom, rectangle selection, lasso selection, and hover-aware selection movement.
+- **Key files**: `src/modes/SpriteMode/SpriteViewport.tsx`, `src/modes/SpriteMode/useSpriteSheet.ts`
 - **Status**: Active
 
-### Animation Preview
-- **Description**: Real-time animation preview using a dedicated canvas.
-- **Key files**: `sprite-editor.html` (Animation loop with `requestAnimationFrame`)
+### Sprite Frame Configuration & Preview
+- **Description**: Lets users configure frame width/height/count/FPS, view grid overlays, preview the current frame, and play animation.
+- **Key files**: `src/modes/SpriteMode/SpriteSidebar.tsx`, `src/modes/SpriteMode/useSpriteSheet.ts`
+- **Status**: Active
+
+### Destructive Image Editing
+- **Description**: Supports background sampling/removal, reset image edits, canvas resize without stretching, and selection move commit.
+- **Key files**: `src/modes/SpriteMode/useSpriteSheet.ts`, `src/modes/SpriteMode/SpriteSidebar.tsx`
+- **Status**: Active
+
+### Undo
+- **Description**: Supports undo for destructive image-edit operations via sidebar button and `Cmd/Ctrl+Z`.
+- **Key files**: `src/App.tsx`, `src/modes/SpriteMode/useSpriteSheet.ts`, `src/modes/SpriteMode/SpriteSidebar.tsx`
 - **Status**: Active
 
 ### Export Tools
-- **Description**: Exports the current selection, a single frame, or all sliced frames.
-- **Key files**: `sprite-editor.html` (Canvas `toBlob` and anchor tag download logic)
+- **Description**: Exports the current selection or the current frame as PNG.
+- **Key files**: `src/modes/SpriteMode/SpriteSidebar.tsx`
 - **Status**: Active
 
 ---
 
-## Data Model
+## Current State Model
 
-The application does not use a backend database. The primary state is kept in memory using JavaScript variables:
-- `img`: The loaded Image object.
-- `spriteWidth`, `spriteHeight`, `offsetX`, `offsetY`, `fps`: Sprite configuration parameters.
-- `frames`: Array of generated canvas elements for each slice.
+The application is fully client-side. Primary runtime state lives in the `SpriteState` object managed by `useSpriteSheet()`.
+
+Key state groups include:
+- **Source state**: `img`, `imgSrc`, `editCanvas`
+- **Viewport state**: `panX`, `panY`, `zoom`
+- **Tool / selection state**: `tool`, `selType`, `sel`, `lassoDrawing`, `lassoPoints`
+- **Animation state**: `currentFrame`, `isPlaying`, `timer`, `lastTime`
+- **Move transaction state**: `movingSel`, `moveSelStart`, `floatingCanvas`, `floatOffset`
+- **Frame config**: `fw`, `fh`, `fcount`, `fps`, `ox`, `oy`
+- **Background removal state**: `bgRemovalTolerance`, `bgSampleColor`, `bgPickMode`
+- **Undo support**: bounded undo history exposed via controller methods such as `undo()` / `canUndo`
 
 ---
 
@@ -44,5 +61,11 @@ The application does not use a backend database. The primary state is kept in me
 
 | Purpose | Path |
 |---------|------|
-| Entire Application | `sprite-editor.html` |
-| Project Info | `package.json`, `README.md` |
+| React entrypoint | `src/main.tsx` |
+| App shell / global shortcuts | `src/App.tsx` |
+| Core editor controller | `src/modes/SpriteMode/useSpriteSheet.ts` |
+| Viewport interaction layer | `src/modes/SpriteMode/SpriteViewport.tsx` |
+| Sidebar controls / import / export | `src/modes/SpriteMode/SpriteSidebar.tsx` |
+| Global styles | `src/styles/index.css` |
+| Project metadata | `package.json`, `README.md`, `ARCHITECTURE.md` |
+| Historical reference file | `sprite-editor.html` |

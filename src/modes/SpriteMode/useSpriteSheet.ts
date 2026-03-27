@@ -56,6 +56,16 @@ export interface SpriteState {
   bgPickMode: boolean
 }
 
+interface UndoSnapshot {
+  img: HTMLImageElement | null
+  imgSrc: string
+  editCanvas: HTMLCanvasElement | null
+  sel: Selection | null
+  selType: 'rect' | 'lasso'
+  currentFrame: number
+  bgSampleColor: RgbColor | null
+}
+
 const cloneSelection = (sel: Selection): Selection => ({
   ...sel,
   points: sel.points ? sel.points.map((point) => ({ ...point })) : undefined,
@@ -138,6 +148,7 @@ const colorsAreSimilar = (a: RgbColor, b: RgbColor, tolerance: number) => (
 )
 
 export function useSpriteSheet() {
+  const [canUndo, setCanUndo] = useState(false)
   const [s, setS] = useState<SpriteState>({
     img: null,
     imgSrc: '',
@@ -179,6 +190,7 @@ export function useSpriteSheet() {
   const selRef = useRef<HTMLCanvasElement | null>(null)
   const previewRef = useRef<HTMLCanvasElement | null>(null)
   const objectUrlRef = useRef<string | null>(null)
+  const undoStackRef = useRef<UndoSnapshot[]>([])
 
   const revokeObjectUrl = (url: string | null) => {
     if (url?.startsWith('blob:')) {
@@ -195,6 +207,29 @@ export function useSpriteSheet() {
       ctx.drawImage(source, 0, 0)
     }
     return canvas
+  }
+
+  const createUndoSnapshot = (state: SpriteState): UndoSnapshot => ({
+    img: state.img,
+    imgSrc: state.imgSrc,
+    editCanvas: state.editCanvas ? cloneDrawableSource(state.editCanvas) : null,
+    sel: state.sel ? cloneSelection(state.sel) : null,
+    selType: state.selType,
+    currentFrame: state.currentFrame,
+    bgSampleColor: state.bgSampleColor ? cloneColor(state.bgSampleColor) : null,
+  })
+
+  const pushUndoSnapshot = (state: SpriteState) => {
+    if (!state.img) return
+    const nextStack = [...undoStackRef.current, createUndoSnapshot(state)]
+    undoStackRef.current = nextStack.slice(-20)
+    setCanUndo(undoStackRef.current.length > 0)
+  }
+
+  const clearUndoStack = () => {
+    if (!undoStackRef.current.length) return
+    undoStackRef.current = []
+    setCanUndo(false)
   }
 
   const syncCanvasSizes = (source: DrawableSource | null) => {
@@ -268,7 +303,9 @@ export function useSpriteSheet() {
 
   const applyBackgroundRemoval = (targetColor = s.bgSampleColor) => {
     const source = getDrawableSource()
-    if (!source || !targetColor) return
+    if (!source || !targetColor || s.movingSel) return
+
+    pushUndoSnapshot(s)
 
     const canvas = cloneDrawableSource(source)
     const ctx = canvas.getContext('2d')
@@ -330,7 +367,36 @@ export function useSpriteSheet() {
     setBackgroundSample(color)
   }
 
+  const undo = () => {
+    if (s.movingSel || !undoStackRef.current.length) return
+    const snapshot = undoStackRef.current[undoStackRef.current.length - 1]
+    undoStackRef.current = undoStackRef.current.slice(0, -1)
+    setCanUndo(undoStackRef.current.length > 0)
+    setS((prev) => ({
+      ...prev,
+      img: snapshot.img,
+      imgSrc: snapshot.imgSrc,
+      editCanvas: snapshot.editCanvas ? cloneDrawableSource(snapshot.editCanvas) : null,
+      sel: snapshot.sel ? cloneSelection(snapshot.sel) : null,
+      selType: snapshot.selType,
+      currentFrame: snapshot.currentFrame,
+      bgSampleColor: snapshot.bgSampleColor ? cloneColor(snapshot.bgSampleColor) : null,
+      lassoDrawing: false,
+      lassoPoints: [],
+      dragging: false,
+      panStart: null,
+      selStart: null,
+      movingSel: false,
+      moveSelStart: null,
+      floatingCanvas: null,
+      floatOffset: { x: 0, y: 0 },
+      bgPickMode: false,
+    }))
+  }
+
   const resetEdits = () => {
+    if (!s.editCanvas || s.movingSel) return
+    pushUndoSnapshot(s)
     setS((prev) => ({
       ...prev,
       editCanvas: null,
@@ -345,7 +411,9 @@ export function useSpriteSheet() {
 
   const resizeCanvas = (targetWidth: number, targetHeight: number, anchor: ResizeAnchor) => {
     const source = getDrawableSource()
-    if (!source) return
+    if (!source || s.movingSel) return
+
+    pushUndoSnapshot(s)
 
     const nextWidth = Math.max(1, Math.round(targetWidth))
     const nextHeight = Math.max(1, Math.round(targetHeight))
@@ -432,7 +500,22 @@ export function useSpriteSheet() {
 
   const commitMovingSelection = () => {
     setS((prev) => {
-      if (!prev.movingSel || !prev.editCanvas || !prev.floatingCanvas) return prev
+      if (!prev.movingSel || !prev.editCanvas || !prev.floatingCanvas || !prev.moveSelStart) return prev
+
+      const snapshotCanvas = cloneDrawableSource(prev.editCanvas)
+      const snapshotCtx = snapshotCanvas.getContext('2d')
+      if (snapshotCtx) {
+        snapshotCtx.drawImage(prev.floatingCanvas, Math.round(prev.moveSelStart.selSnap.x), Math.round(prev.moveSelStart.selSnap.y))
+      }
+      pushUndoSnapshot({
+        ...prev,
+        editCanvas: snapshotCanvas,
+        sel: cloneSelection(prev.moveSelStart.selSnap),
+        floatingCanvas: null,
+        movingSel: false,
+        moveSelStart: null,
+        floatOffset: { x: 0, y: 0 },
+      })
 
       const committedCanvas = createCanvas(prev.editCanvas.width, prev.editCanvas.height)
       const committedCtx = committedCanvas.getContext('2d')
@@ -507,12 +590,22 @@ export function useSpriteSheet() {
   }, [])
 
   const loadImage = (src: string) => {
+    if (s.movingSel) return
+
     const img = new Image()
     const nextObjectUrl = src.startsWith('blob:') ? src : null
     const prevObjectUrl = objectUrlRef.current
+    const snapshot = s.img ? createUndoSnapshot(s) : null
 
     img.onload = () => {
       syncCanvasSizes(img)
+
+      if (snapshot) {
+        undoStackRef.current = [...undoStackRef.current, snapshot].slice(-20)
+        setCanUndo(true)
+      } else {
+        clearUndoStack()
+      }
 
       if (prevObjectUrl && prevObjectUrl !== nextObjectUrl) {
         revokeObjectUrl(prevObjectUrl)
@@ -714,6 +807,7 @@ export function useSpriteSheet() {
   return {
     s,
     setS,
+    canUndo,
     mainRef,
     gridRef,
     selRef,
@@ -728,6 +822,7 @@ export function useSpriteSheet() {
     sampleBackgroundColorAt,
     autoRemoveBackground,
     applyBackgroundRemoval,
+    undo,
     resetEdits,
     startMovingSelection,
     updateMovingSelection,

@@ -1,9 +1,9 @@
 # Application State
 
 > This document is a snapshot of the application's current real state. **Only keep the latest state, no history.**
-> Agent should read this file at the start of each new session to avoid making wrong assumptions based on common knowledge.
+> Agent should read this file at the start of each new session to avoid making wrong assumptions.
 >
-> **Last updated**: YYYY-MM-DD
+> **Last updated**: 2026-03-27
 
 ---
 
@@ -13,7 +13,7 @@
 | --------------- | -------------------------------------- |
 | **Platform**    | Local / Static Hosting                 |
 | **Runtime**     | Web Browser                            |
-| **Output mode** | Standalone HTML File                   |
+| **Output mode** | Vite-built static frontend application |
 | **Region**      | N/A                                    |
 | **Domain**      | N/A                                    |
 
@@ -25,19 +25,21 @@
 | -------------------- | -------- | ------- |
 | **Database**         | N/A      | Pure client-side tool |
 | **Auth**             | N/A      | No authentication needed |
-| **Storage**          | N/A      | In-memory (FileReader API) |
-| **Payments**         | N/A      | Free open-source tool |
-| **Error monitoring** | N/A      | Console only |
-| **Logging**          | N/A      | Console only |
+| **Storage**          | N/A      | In-memory browser state only |
+| **Payments**         | N/A      | Free local tool |
+| **Error monitoring** | N/A      | Browser console only |
+| **Logging**          | N/A      | Browser console only |
 | **Analytics**        | N/A      | None |
 
 ---
 
-## Known Production Limitations
+## Known Limitations
 
 | Limitation | Impact | Reference |
 | ---------- | ------ | --------- |
-| Single File Size Limit | Extremely large images may crash the browser tab | N/A |
+| Large images are memory-heavy | Very large images may cause sluggish interaction or browser tab instability | `src/modes/SpriteMode/useSpriteSheet.ts` |
+| No persistence layer | Reloading the page loses in-memory editing state | Current app architecture |
+| No dedicated automated test suite | Regression coverage depends on build checks and manual smoke tests | `docs/TESTING.md` |
 
 ---
 
@@ -45,18 +47,28 @@
 
 ### Core Features (Live)
 
-- ✅ Image Import (PNG, JPG, WEBP, GIF) via drag-and-drop or selection
-- ✅ Sprite parameters configuration (W, H, Offset, FPS)
-- ✅ Auto-detection of sprite layout & grid overlay
-- ✅ Zoom and pan controls with pixelated rendering
-- ✅ Real-time animation preview and frame strip viewing
-- ✅ Selection tools (Pan, Rectangle, Lasso)
-- ✅ Export options (Selection, Frame, All Frames)
+- ✅ Image import via click, drag-and-drop, and paste
+- ✅ Viewport pan and wheel zoom with pixelated rendering
+- ✅ Rectangle and lasso selection tools
+- ✅ Selection move and commit back into the image
+- ✅ Frame configuration (width, height, count, FPS, offsets)
+- ✅ Grid overlay and frame strip preview
+- ✅ Animation preview playback
+- ✅ Background color sampling and tolerance-based background removal
+- ✅ Canvas resize without stretching, including anchor-based crop/pad behavior
+- ✅ Undo for destructive image edits
+- ✅ Export current selection and current frame
 
 ### Support Systems (Live)
 
-- ✅ Responsive Canvas Adjustment
-- ✅ Pure CSS Dark Mode UI
+- ✅ Shared React controller architecture via `useSpriteSheet()`
+- ✅ Arco Design + Tailwind dark UI
+- ✅ Vite dev/build workflow
+
+### Historical Notes
+
+- `sprite-editor.html` may still exist in the repo, but it is not the current main workflow.
+- Current app entry is `index.html` + `src/main.tsx`.
 
 ### Active Tech Debt
 
