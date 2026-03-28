@@ -2,195 +2,141 @@
 
 ## ⛔ Hard Rules (Must follow on every task, no exceptions)
 
-1. **STOP — Do NOT write code directly.** After receiving any development task, the first step is to read the relevant docs from the "Repository Knowledge Map" below to understand existing architecture and context.
-2. **Docs before code.** If a task requires a Design Doc or Exec Plan (see criteria below), you must **create it and get user confirmation first** before writing any code.
-3. **Plan before execute.** Present what files you plan to change, why, and how. **Wait for explicit user approval** before making changes.
-4. **Self-review + update docs after completion.** After code changes, you must run the "Pre-delivery Self-review" checklist and show results, then update all affected docs (see "Development Workflow" section). Skipping either step means the task is incomplete.
-5. **Tests first.** When working on core business logic, you must write tests first, confirm they fail, then write the implementation (see "TDD Discipline" section).
+1. **Read the repo docs first.** Before changing code, read the relevant docs from the "Repository Knowledge Map" below so your work matches the current architecture and product behavior.
+2. **Plan before non-trivial execution.** For multi-file features, architectural changes, or behavior changes, present the intended files and approach first and wait for approval.
+3. **Docs must ship with code.** Any change to product behavior, architecture, commands, workflow, or plan status must update the relevant docs in the same task.
+4. **Keep indexes and status docs consistent.** When adding, moving, or reclassifying docs, update the corresponding `index.md`, `STATE.md`, and `DECISIONS.md` entries where applicable.
+5. **Self-review before handoff.** Before declaring a task complete, verify the implementation, verify docs, and summarize what changed.
 
-> Violating any of the above = failure. Better to ask one more question than to skip documentation.
+> Skipping relevant documentation updates means the task is incomplete.
 
 ---
 
 ## Repository Knowledge Map
 
-> Give the agent a map, not a 1000-page manual. Read the map first, dive deeper as needed.
-
 ### Architecture & Quality
 
-- **[ARCHITECTURE.md](ARCHITECTURE.md)** — Architecture map: module structure, layering rules, dependency directions, cross-cutting concerns
-- **[docs/STATE.md](docs/STATE.md)** — Application state snapshot: deployment, infrastructure, known limitations (**must-read for new sessions to avoid wrong assumptions**)
-- **[docs/DECISIONS.md](docs/DECISIONS.md)** — Decision log: key decisions and trade-offs from all completed plans (must-read for new sessions)
-- **[docs/QUALITY_SCORE.md](docs/QUALITY_SCORE.md)** — Quality scores: rating and known gaps per module
-- **[docs/TESTING.md](docs/TESTING.md)** — Testing strategy
+- **[ARCHITECTURE.md](ARCHITECTURE.md)** — Current module structure, layering, and editing pipeline
+- **[docs/STATE.md](docs/STATE.md)** — Current runtime/deployment snapshot and known limitations
+- **[docs/DECISIONS.md](docs/DECISIONS.md)** — Important historical decisions and trade-offs
+- **[docs/QUALITY_SCORE.md](docs/QUALITY_SCORE.md)** — Quality assessment by current module boundary
+- **[docs/TESTING.md](docs/TESTING.md)** — Verification strategy and current testing reality
 
 ### Product Knowledge
 
-- **[docs/product-specs/knowledge-base.md](docs/product-specs/knowledge-base.md)** — Core feature descriptions, key file paths, data model
-- **[docs/product-specs/glossary.md](docs/product-specs/glossary.md)** — Canonical terms and definitions used across the project
-- **[docs/product-specs/product-roadmap.md](docs/product-specs/product-roadmap.md)** — Product roadmap
+- **[docs/product-specs/knowledge-base.md](docs/product-specs/knowledge-base.md)** — Core feature map, key file ownership, and state model
+- **[docs/product-specs/glossary.md](docs/product-specs/glossary.md)** — Canonical project terminology
+- **[docs/product-specs/product-roadmap.md](docs/product-specs/product-roadmap.md)** — High-level roadmap and current priorities
 
 ### Design Documents
 
-- **[docs/design-docs/index.md](docs/design-docs/index.md)** — Design document index (technical proposals & architecture decisions)
+- **[docs/design-docs/index.md](docs/design-docs/index.md)** — Design document index and status overview
 
 ### Execution Plans
 
-- **[docs/exec-plans/index.md](docs/exec-plans/index.md)** — Execution plan index (active/completed plans, priority overview)
+- **[docs/exec-plans/index.md](docs/exec-plans/index.md)** — Execution plan index (active/completed)
 - **[docs/exec-plans/tech-debt.md](docs/exec-plans/tech-debt.md)** — Centralized tech debt tracking
 
-### Document Templates
+### Templates
 
-- **[docs/templates/exec-plan.md](docs/templates/exec-plan.md)** — Must use this template when creating new execution plans
-- **[docs/templates/design-doc.md](docs/templates/design-doc.md)** — Must use this template when creating new design documents
-
-### References
-
-- **[docs/references/](docs/references/)** — External guides, configuration docs, reference articles
-- **[skills/](skills/)** — Custom agent skills (e.g., [design-advisor](skills/design-advisor/SKILL.md)) to be invoked for specialized tasks
+- **[docs/templates/design-doc.md](docs/templates/design-doc.md)** — Design doc template
+- **[docs/templates/exec-plan.md](docs/templates/exec-plan.md)** — Execution plan template
 
 ---
 
 ## Common Commands
 
-- **Run Dev Server**: `npx http-server` or `python3 -m http.server 8000`
-- **Build**: N/A - pure frontend, no build step
-- **Test**: N/A - no tests configured
-- **Lint/Format**: N/A - no linter/formatter configured
+- **Install**: `npm install`
+- **Run Dev Server**: `npm run dev`
+- **Build**: `npm run build`
+- **Preview Production Build**: `npm run preview`
+- **Type Check**: `npm exec tsc --noEmit`
+- **Tests**: No dedicated automated test script is configured yet
 
 ## Tech Stack
 
-- **Runtime**: Browser (HTML5 + Vanilla JS)
-- **Frameworks**: None (Pure Vanilla JS)
-- **Rendering**: HTML5 Canvas API (`image-rendering: pixelated;`)
-- **Styling**: Pure CSS (Dark Mode)
+- **Runtime**: Browser
+- **App Type**: React 19 + Vite + TypeScript frontend
+- **UI**: Arco Design + Tailwind CSS
+- **Rendering**: HTML5 Canvas (`image-rendering: pixelated`)
+- **Primary Entry**: `index.html` + `src/main.tsx`
+- **Historical File**: `sprite-editor.html` is historical/reference only, not the main workflow
 
 ## Coding Rules
 
-- **Paradigm**: Vanilla JavaScript, no build tools or bundlers.
-- **Styling**: Maintain the existing CSS dark theme. Keep it minimal and efficient.
-- **Canvas Rendering**: Ensure `image-rendering: pixelated;` is used for perfect pixel art support.
-- **Dependencies**: Do not introduce any external NPM dependencies or build steps. Keep it a single HTML file application if possible, or simple static files.
+- **Architecture**: Shared editor state is created once in `useSpriteSheet()` and passed down from `src/App.tsx`.
+- **Ownership**: Canvas editing logic belongs in `src/modes/SpriteMode/useSpriteSheet.ts`; UI components should stay thin.
+- **Viewport/UI split**: Pointer interaction belongs in `SpriteViewport.tsx`; controls/import/export belong in `SpriteSidebar.tsx`.
+- **Styling**: Preserve the current dark theme and existing Arco + Tailwind patterns.
+- **Canvas rendering**: Keep `image-rendering: pixelated` for sprite clarity.
+- **Dependencies**: Reuse the current stack. Do not add new dependencies unless the task clearly requires them.
 
 ## Testing Rules
 
-N/A — No test suite currently exists.
-
-### TDD Exemptions
-
-N/A — TDD is not currently enforced.
-
-### Test-to-Spec Traceability
-
-Test file headers must reference the associated spec source, ensuring every test is traceable to a specific spec entry:
-
-```
-/**
- * @spec docs/design-docs/xxx.md — P1, P3, B1, B2
- */
-```
+- There is no established automated test suite yet.
+- For now, verification is primarily:
+  - `npm exec tsc --noEmit`
+  - `npm run build`
+  - targeted manual smoke tests for affected features
+- If a task introduces isolated pure logic that can be tested cheaply, prefer adding focused tests rather than broad UI mocks.
 
 ## Development Workflow
 
-### Document-Driven Principle (Mandatory)
+### Documentation-Driven Rule (Mandatory)
 
-> ⛔ This is not a suggestion — it is a hard requirement. Skipping documentation steps = task failure.
+Before starting a task:
+- Read the relevant docs from the knowledge map.
+- Check current code paths before trusting older docs.
 
-> Knowledge the agent can't see doesn't exist. All decisions, proposals, and context must live in `docs/`, not in conversation or memory.
+After completing a task, update docs in the same change when relevant:
+- **User-visible feature changes** → Update `README.md` and `docs/product-specs/knowledge-base.md`
+- **Architecture / module ownership changes** → Update `ARCHITECTURE.md`
+- **Runtime / deployment / limitations changes** → Update `docs/STATE.md`
+- **Verification workflow changes** → Update `docs/TESTING.md`
+- **Quality posture changes** → Update `docs/QUALITY_SCORE.md`
+- **Roadmap / product direction changes** → Update `docs/product-specs/product-roadmap.md`
+- **Completed plans / historical decisions** → Update `docs/DECISIONS.md`
+- **New or reclassified design docs / exec plans** → Update the doc itself and its `index.md`
+- **New tech debt discovered** → Update `docs/exec-plans/tech-debt.md`
 
-**Before starting a task — read docs first:** Check the "Repository Knowledge Map" above, find and read relevant docs before starting work.
+### Minimum doc-sync checklist
 
-**After completing a task — must update docs:**
+For every non-trivial code change, confirm all of the following before handoff:
+- [ ] Did behavior change for users?
+- [ ] Did file ownership or architecture change?
+- [ ] Did commands, setup, or build workflow change?
+- [ ] Did plan status or historical context change?
+- [ ] Did I update the relevant docs or explicitly confirm none were needed?
 
-- **Product feature changes** → Update [knowledge-base.md](docs/product-specs/knowledge-base.md) (feature descriptions, key file paths, data model)
-- **Architecture/layering changes** → Update [ARCHITECTURE.md](ARCHITECTURE.md)
-- **New design proposals** → Create new doc in `docs/design-docs/` (use [template](docs/templates/design-doc.md)), update [index.md](docs/design-docs/index.md)
-- **New execution plans** → Create new doc in `docs/exec-plans/active/` (use [template](docs/templates/exec-plan.md)), update [index.md](docs/exec-plans/index.md)
-- **Plan completed** → Move doc from `active/` to `completed/`, update [index.md](docs/exec-plans/index.md), append decision record to [DECISIONS.md](docs/DECISIONS.md), and update affected entries in [STATE.md](docs/STATE.md)
-- **New tech debt discovered** → Record in [tech-debt.md](docs/exec-plans/tech-debt.md)
-- **Quality score changes** → Update [QUALITY_SCORE.md](docs/QUALITY_SCORE.md)
+### When to create a Design Doc
 
-**Index maintenance:** After adding or moving any doc under `docs/`, you must update the corresponding `index.md` to keep the index consistent with actual files.
+Create a new doc in `docs/design-docs/` when:
+- introducing a new subsystem or major editing mode
+- changing dependency directions or component ownership across modules
+- evaluating multiple viable architectural approaches
+- adopting a new dependency or platform-level technology
 
-**When to create a Design Doc** — When any of the following apply, create one in `docs/design-docs/` (use [template](docs/templates/design-doc.md)):
+### When to create an Exec Plan
 
-- Adding a new module or subsystem
-- Cross-module refactoring or changing dependency directions
-- Introducing a new external dependency or technology choice
-- 2+ viable approaches that need comparison
+Create a new doc in `docs/exec-plans/active/` when:
+- work spans multiple files/modules with ordered steps
+- a change is large enough that execution sequencing matters
+- reclassification, migration, or rollout status needs to be tracked over time
 
-**When to create an Exec Plan** — When any of the following apply, create one in `docs/exec-plans/active/` (use [template](docs/templates/exec-plan.md)):
+### Index maintenance
 
-- Expected to modify ≥ 3 modules/directories
-- Involves database migrations or irreversible changes
-- Implementation steps have explicit ordering dependencies
-
-**Document Naming Conventions:**
-
-| Document Type | Format                              | Location                      | Example            |
-| ------------- | ----------------------------------- | ----------------------------- | ------------------ |
-| Design Doc    | `D{序号}-{kebab-case-描述}.md`       | `docs/design-docs/`           | `D1-auth-flow.md`  |
-| Exec Plan     | `E{序号}-{kebab-case-描述}.md`       | `docs/exec-plans/active/`     | `E1-db-migration.md` |
-
-- **序号**必须递增，从对应 `index.md` 表格中获取下一个可用编号
-- **描述**使用 kebab-case（小写英文，单词间用 `-` 连接），简短概括主题
-- Exec Plan 完成后，文件从 `active/` 移至 `completed/`，文件名不变
-
-**No doc needed:** Single-file bug fixes, style tweaks, copy changes, and other localized modifications.
-
-### Self-Rationalization Check (Agent self-check)
-
-> When you catch yourself thinking any of the following, **stop** and follow the process.
-
-| If you're thinking...                                   | The reality is...                                                                          |
-| ------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| "This change is simple, no need for the full process"   | Simple changes are where assumptions break most easily. The short process runs fast        |
-| "I already know how it works"                           | You know how you _think_ it works. Verify with evidence                                    |
-| "TDD is too heavy for this fix"                         | Simple code breaks too. A test takes only 30 seconds                                       |
-| "I'll add docs later"                                   | Later never comes. Write them now                                                          |
-| "This time is different"                                | Every time is different, but the process always applies                                    |
-| "Let me code first to confirm it works, then add tests" | Tests first = "what should happen"; tests after = "what happened". Fundamentally different |
-
-### Pre-delivery Self-review (Mandatory)
-
-After code is written and CI passes, the agent must run the following checklist and show results to the user:
-
-**Spec Alignment Check:**
-
-- [ ] Every postcondition in the behavioral contract has a corresponding test
-- [ ] Every scenario in the edge case catalog has a corresponding test
-- [ ] Are there behaviors in the implementation not described in the spec? (If so, add to spec or remove implementation)
-
-**Test Quality Check:**
-
-- [ ] Any tautological tests (tests that just repeat implementation logic)?
-- [ ] Over-mocking (mocking away core logic that should be tested)?
-- [ ] Testing only happy paths while ignoring error paths?
-
-**Implementation Quality Check:**
-
-- [ ] Any placeholder comments (TODO / FIXME / HACK) left unhandled?
-- [ ] Error handling using generic catch-all instead of specific error types?
-- [ ] Any implicit external state dependencies (should be passed as parameters)?
-- [ ] Does the implementation follow ARCHITECTURE.md layering rules?
-
-**Security Check:**
-
-- [ ] User input validated at the boundary?
-- [ ] Operations verify caller permissions where applicable?
-- [ ] Any sensitive information that could leak to unauthorized contexts?
+Whenever you add, move, rename, or reclassify a document under `docs/`, update the corresponding `index.md` in the same task.
 
 ### Task Completion Criteria
 
-A development task is considered "complete" only when ALL of the following are met:
-
-1. ✅ CI checks all pass
-2. ✅ Self-review checklist all checked (no remaining items, or reasons noted)
-3. ✅ Affected docs updated
-4. ✅ New/modified code is traceable to a spec (specific entry in Design Doc or Exec Plan)
-5. ✅ Self-review results summary shown to the user
+A task is complete only when all of the following are true:
+1. Relevant implementation changes are finished
+2. Verification was run at the appropriate level for the change
+3. All affected docs are updated, or you explicitly verified that no doc changes were needed
+4. Any affected indexes / status docs are consistent
+5. The final handoff clearly states what changed
 
 ## Git Workflow
 
-- **Never commit directly to the main branch** — verify current branch with `git branch` before committing
-- Merge via feature branch + PR. Naming: `feat/xxx`, `fix/xxx`, `refactor/xxx`, `test/xxx`
+- Prefer feature branches and PRs over working directly on `main`
+- Keep commits focused and keep docs updates in the same change as the code they describe

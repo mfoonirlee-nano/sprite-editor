@@ -5,7 +5,7 @@
 > **Status**: 📋 Proposal | ⏳ Pending | 🔄 In Progress | ✅ Completed
 > **Priority**: 🔴 High | 🟡 Medium | 🟢 Low
 > **Goal**: [One-sentence goal description]
-> **Related PR**: TBD
+> **Related PR**: [link or N/A]
 
 ---
 
@@ -17,7 +17,7 @@
 
 ### Current Behavior
 
-- [Describe existing behavior relevant to this plan, with code pointers]
+- [Describe existing behavior relevant to this plan, with concrete code pointers]
 
 ### Key Files
 
@@ -43,7 +43,7 @@
 
 ## Verification Metrics
 
-[How do we measure success? List quantifiable metrics]
+[List the checks that prove the plan succeeded, e.g. type-check, build, manual smoke paths]
 
 ---
 
@@ -51,16 +51,16 @@
 
 | Date | Phase | Plan vs Actual | Reason | Impact |
 | ---- | ----- | -------------- | ------ | ------ |
-| —    | —     | —              | —      | —      |
+| — | — | — | — | — |
 
 ## Progress Log
 
-| Date       | Progress              | Notes |
-| ---------- | --------------------- | ----- |
-| YYYY-MM-DD | Created plan document | —     |
+| Date | Progress | Notes |
+| ---- | -------- | ----- |
+| YYYY-MM-DD | Created plan document | — |
 
 ## Decision Log
 
 | Date | Decision | Rationale | Alternatives |
 | ---- | -------- | --------- | ------------ |
-| —    | —        | —         | —            |
+| — | — | — | — |
