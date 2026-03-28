@@ -48,7 +48,7 @@
 
 - **Install**: `npm install`
 - **Run Dev Server**: `npm run dev`
-- **Build**: `npm run build`
+- **Build**: `npm run build` (emits relative `./` asset paths for static hosting)
 - **Preview Production Build**: `npm run preview`
 - **Type Check**: `npm exec tsc --noEmit`
 - **Tests**: No dedicated automated test script is configured yet

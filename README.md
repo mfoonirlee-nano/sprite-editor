@@ -61,6 +61,8 @@ npm run test
 npm run build
 ```
 
+构建产物会使用相对资源路径（如 `./assets/...`），便于把 `dist/` 部署到任意静态子目录或直接以静态目录方式打开。
+
 ### Full check
 
 ```bash
