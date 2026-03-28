@@ -1,28 +1,9 @@
 import React from 'react'
-import type { Selection, SpriteSheetController } from './useSpriteSheet'
+import type { SpriteSheetController } from './useSpriteSheet'
+import { isPointInSelection } from './selectionUtils'
 
 interface SpriteViewportProps {
   spriteSheet: SpriteSheetController
-}
-
-const isPointInPolygon = (point: { x: number; y: number }, polygon: Array<{ x: number; y: number }>) => {
-  let inside = false
-  for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
-    const xi = polygon[i].x
-    const yi = polygon[i].y
-    const xj = polygon[j].x
-    const yj = polygon[j].y
-    const intersects = yi > point.y !== yj > point.y && point.x < ((xj - xi) * (point.y - yi)) / ((yj - yi) || 1e-9) + xi
-    if (intersects) inside = !inside
-  }
-  return inside
-}
-
-const isPointInSelection = (point: { x: number; y: number }, sel: Selection) => {
-  if (sel.points?.length) {
-    return isPointInPolygon(point, sel.points)
-  }
-  return point.x >= sel.x && point.x <= sel.x + sel.w && point.y >= sel.y && point.y <= sel.y + sel.h
 }
 
 export default function SpriteViewport({ spriteSheet }: SpriteViewportProps) {
@@ -41,7 +22,7 @@ export default function SpriteViewport({ spriteSheet }: SpriteViewportProps) {
   } = spriteSheet
   const [hoveringSelection, setHoveringSelection] = React.useState(false)
 
-  const applyTransform = () => {
+  React.useEffect(() => {
     const t = `translate(${s.panX}px, ${s.panY}px) scale(${s.zoom})`
     const elMain = mainRef.current
     const elGrid = gridRef.current
@@ -50,11 +31,7 @@ export default function SpriteViewport({ spriteSheet }: SpriteViewportProps) {
     elMain.style.transform = t
     elGrid.style.transform = t
     elSel.style.transform = t
-  }
-
-  React.useEffect(() => {
-    applyTransform()
-  }, [s.panX, s.panY, s.zoom])
+  }, [gridRef, mainRef, selRef, s.panX, s.panY, s.zoom])
 
   const screenToImage = (sx: number, sy: number) => {
     const wrap = mainRef.current?.parentElement as HTMLElement | null
