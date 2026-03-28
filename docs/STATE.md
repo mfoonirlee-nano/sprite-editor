@@ -37,7 +37,7 @@
 
 | Limitation | Impact | Reference |
 | ---------- | ------ | --------- |
-| Large images are memory-heavy | Very large images may cause sluggish interaction or browser tab instability | `src/modes/SpriteMode/useSpriteSheet.ts` |
+| Large images are memory-heavy | Very large images may cause sluggish interaction or browser tab instability | `src/hooks/useSpriteSheet.ts` |
 | No persistence layer | Reloading the page loses in-memory editing state | Current app architecture |
 | No dedicated automated test suite | Regression coverage depends on build checks and manual smoke tests | `docs/TESTING.md` |
 

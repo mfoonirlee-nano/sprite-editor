@@ -1,8 +1,9 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { Button, InputNumber, Tooltip } from '@arco-design/web-react'
 import { IconDragDotVertical, IconUpload, IconDragArrow, IconFullscreen, IconPenFill, IconRefresh, IconUndo } from '@arco-design/web-react/icon'
-import { loadImageFile } from './importUtils'
-import type { ResizeAnchor, SpriteSheetController } from './useSpriteSheet'
+import { loadImageFile } from '../../utils/spriteSheetImport'
+import type { ResizeAnchor } from '../../types/spriteSheetTypes'
+import type { SpriteSheetController } from '../../hooks/useSpriteSheet'
 
 interface SpriteSidebarProps {
   spriteSheet: SpriteSheetController

@@ -13,7 +13,7 @@ This project is a React + Vite + TypeScript frontend.
 Correctness is currently established through:
 - static verification (`npm run typecheck`)
 - lint verification (`npm run lint`)
-- automated unit tests for extracted pure helpers (`npm run test`)
+- automated unit tests for focused deterministic SpriteMode logic (`npm run test`)
 - production build verification (`npm run build`)
 - manual smoke testing of the affected editor flows
 
@@ -22,7 +22,7 @@ Correctness is currently established through:
 ## Testing Framework & Types
 
 - **Automated unit tests**: Vitest (`npm run test`)
-- **Current unit-test focus**: extracted pure helpers such as selection geometry and image import utilities
+- **Current unit-test focus**: focused deterministic SpriteMode and shared types/utils-backed logic, especially shared geometry and import behavior that benefit from isolated verification
 - **Type checking**: TypeScript (`npm run typecheck`)
 - **Linting**: ESLint (`npm run lint`)
 - **Build verification**: Vite production build (`npm run build`)
@@ -32,7 +32,7 @@ Correctness is currently established through:
 
 ## Directory Structure
 
-The repository currently keeps lightweight test files next to the extracted helper modules they cover.
+The repository currently keeps lightweight test files next to the SpriteMode logic they cover.
 Current automated tests live in:
 - `src/modes/SpriteMode/selectionUtils.test.ts`
 - `src/modes/SpriteMode/importUtils.test.ts`
@@ -96,8 +96,8 @@ When editing sprite-editor behavior, manually validate the affected flows as nee
 ## Conventions & Rules
 
 When expanding automated coverage, continue to prioritize:
-- extracting pure canvas/state helpers from `useSpriteSheet.ts` where practical
-- testing deterministic editing logic independently from pointer-event wiring
+- testing deterministic SpriteMode logic independently from pointer-event wiring
+- extracting or retaining isolated helpers only when that separation clearly improves verification value
 - keeping UI mocks minimal and focusing on user-visible behavior
 
 ---

@@ -4,7 +4,7 @@ import { IconInfoCircle } from '@arco-design/web-react/icon'
 import SpriteViewport from './modes/SpriteMode/SpriteViewport'
 import SpriteSidebar from './modes/SpriteMode/SpriteSidebar'
 import SpriteRightPanel from './modes/SpriteMode/SpriteRightPanel'
-import { useSpriteSheet } from './modes/SpriteMode/useSpriteSheet'
+import { useSpriteSheet } from './hooks/useSpriteSheet'
 
 const { Header, Sider, Content } = Layout
 const { Title } = Typography

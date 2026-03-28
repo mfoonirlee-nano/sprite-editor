@@ -11,7 +11,7 @@
 
 | # | Priority | Domain | Description | Impact | Link | Created |
 | - | -------- | ------ | ----------- | ------ | ---- | ------- |
-| 1 | 🟡 Medium | Editor architecture | `src/modes/SpriteMode/useSpriteSheet.ts` is still large and mixes rendering, interaction state, animation, undo, and destructive editing responsibilities. | Makes future feature work and regression isolation harder. | `src/modes/SpriteMode/useSpriteSheet.ts` | 2026-03-27 |
+| 1 | 🟡 Medium | Editor architecture | `src/hooks/useSpriteSheet.ts` is smaller and clearer after the split, but the main controller still mixes rendering, interaction state, animation, undo, and destructive editing orchestration. | Makes future feature work and regression isolation harder when controller responsibilities keep growing. | `src/hooks/useSpriteSheet.ts` | 2026-03-27 |
 | 2 | 🟡 Medium | Verification | The repo still relies on type-check/build verification plus manual smoke tests; there is no dedicated automated test suite for core editing flows. | Regressions in canvas editing behavior are easier to miss. | `docs/TESTING.md` | 2026-03-27 |
 | 3 | 🟢 Low | Documentation process | The repo previously accumulated stale architecture/docs after the React migration; doc-sync discipline is now defined, but future tasks must keep following it. | Documentation can drift again if process is ignored. | `AGENTS.md` | 2026-03-27 |
 

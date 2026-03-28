@@ -1,7 +1,7 @@
 import { Button, InputNumber, Switch, Tooltip } from '@arco-design/web-react'
 import { IconPlayArrow, IconPause, IconDownload, IconDragDotVertical, IconLeft, IconRight } from '@arco-design/web-react/icon'
-import { traceSelectionPath } from './selectionUtils'
-import type { SpriteSheetController } from './useSpriteSheet'
+import { traceSelectionPath } from '../../utils/selectionUtils'
+import type { SpriteSheetController } from '../../hooks/useSpriteSheet'
 
 interface SpriteRightPanelProps {
   collapsed: boolean

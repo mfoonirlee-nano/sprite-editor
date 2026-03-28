@@ -27,17 +27,23 @@ User Input
 /
 ├── index.html
 ├── src/
-│   ├── App.tsx                 # app shell, shared controller wiring, global shortcuts, right-panel UI state
-│   ├── main.tsx                # React entrypoint
+│   ├── App.tsx                      # app shell, shared controller wiring, global shortcuts, right-panel UI state
+│   ├── main.tsx                     # React entrypoint
+│   ├── hooks/
+│   │   └── useSpriteSheet.ts        # shared sprite editor controller hook
+│   ├── types/
+│   │   ├── selectionTypes.ts        # shared selection/domain types
+│   │   └── spriteSheetTypes.ts      # shared sprite controller types
+│   ├── utils/
+│   │   ├── selectionUtils.ts        # shared selection geometry helpers
+│   │   ├── spriteSheetImport.ts     # image import helpers used by the sprite workflow
+│   │   └── spriteSheetCanvasUtils.ts# low-level canvas/source helpers used by the controller
 │   ├── modes/SpriteMode/
-│   │   ├── useSpriteSheet.ts   # core sprite editor state, undo history, and canvas edit logic
-│   │   ├── SpriteViewport.tsx  # viewport interactions and canvas surface
-│   │   ├── SpriteSidebar.tsx   # left-side tools, import, background removal, canvas resize
-│   │   ├── SpriteRightPanel.tsx# right-side frame settings, preview, and export controls
-│   │   ├── selectionUtils.ts   # extracted pure selection geometry helpers
-│   │   ├── importUtils.ts      # extracted image import helpers
-│   │   └── *.test.ts           # helper-focused unit tests
-│   └── styles/                 # global styles
+│   │   ├── SpriteViewport.tsx       # viewport interactions and canvas surface
+│   │   ├── SpriteSidebar.tsx        # left-side tools, import, background removal, canvas resize
+│   │   ├── SpriteRightPanel.tsx     # right-side frame settings, preview, and export controls
+│   │   └── *.test.ts                # focused SpriteMode unit tests
+│   └── styles/                      # global styles
 ├── package.json
 └── README.md
 ```
@@ -47,8 +53,8 @@ User Input
 ## Layering Rules
 
 1. `src/main.tsx` boots the React app.
-2. `src/App.tsx` owns one shared `useSpriteSheet()` instance, passes the controller into the left panel, viewport, and right panel, and holds app-shell UI state such as whether the right panel is collapsed.
-3. `useSpriteSheet.ts` owns editor state, canvas drawing, undo history, and destructive edit operations, but not shell-only layout state.
+2. `src/App.tsx` owns one shared `useSpriteSheet()` instance from `src/hooks/useSpriteSheet.ts`, passes the controller into the left panel, viewport, and right panel, and holds app-shell UI state such as whether the right panel is collapsed.
+3. `src/hooks/useSpriteSheet.ts` owns editor state, canvas drawing, undo history, and destructive edit operations, while `src/types/` and `src/utils/` hold the shared types and low-level helpers that support the controller.
 4. `SpriteViewport.tsx` handles pointer-based interactions such as pan, zoom, selection creation, move commit, and background picking.
 5. `SpriteSidebar.tsx` is the left operations panel for the top toolbar (pan / rect / lasso / undo), import, background removal, and canvas resize.
 6. `SpriteRightPanel.tsx` is the right inspector/export panel for frame settings, preview playback, and export actions.
@@ -72,6 +78,8 @@ User Input
 
 - This is a React/Vite project, not a zero-dependency single-file app.
 - Shared editor state should be created once and passed down, not instantiated separately per panel.
-- Canvas-related behavior belongs in `useSpriteSheet.ts`; reusable pure geometry/import helpers should live beside the mode and be shared by view components.
+- For `src/` business feature code, prefer feature-cohesive ownership over splitting logic into many small files only by responsibility.
+- The shared sprite controller lives in `src/hooks/useSpriteSheet.ts`; canvas-related behavior stays centered there even when `src/types/` and `src/utils/` hold shared domain types or low-level helpers.
+- For business code, files over 300 lines are acceptable when they keep one workflow discoverable in one place, but controller-sized files may still be split into a few shared modules when that improves ownership.
 - Background removal, canvas resize, selection move commit, and undo are part of the same core editing pipeline.
-- Prefer updating existing files over creating new abstractions unless required.
+- Prefer updating the owning feature file or clearly named shared `types`/`utils` modules over creating unrelated abstractions unless reuse, isolated test value, or a clear readability gain justifies extraction.
