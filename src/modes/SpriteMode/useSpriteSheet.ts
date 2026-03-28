@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
+import { clampSelectionToBounds, cloneSelection, traceSelectionPath, translateSelection } from './selectionUtils'
+import type { Point, Selection } from './selectionUtils'
 
 export type Tool = 'pan' | 'select' | 'lasso'
 
-type Point = { x: number; y: number }
 type DrawableSource = HTMLImageElement | HTMLCanvasElement
 export type RgbColor = { r: number; g: number; b: number }
 export type ResizeAnchorX = 'left' | 'center' | 'right'
@@ -10,14 +11,6 @@ export type ResizeAnchorY = 'top' | 'middle' | 'bottom'
 export interface ResizeAnchor {
   x: ResizeAnchorX
   y: ResizeAnchorY
-}
-
-export interface Selection {
-  x: number
-  y: number
-  w: number
-  h: number
-  points?: Point[]
 }
 
 export interface SpriteState {
@@ -66,18 +59,6 @@ interface UndoSnapshot {
   bgSampleColor: RgbColor | null
 }
 
-const cloneSelection = (sel: Selection): Selection => ({
-  ...sel,
-  points: sel.points ? sel.points.map((point) => ({ ...point })) : undefined,
-})
-
-const translateSelection = (sel: Selection, dx: number, dy: number): Selection => ({
-  ...sel,
-  x: sel.x + dx,
-  y: sel.y + dy,
-  points: sel.points ? sel.points.map((point) => ({ x: point.x + dx, y: point.y + dy })) : undefined,
-})
-
 const getSourceWidth = (source: DrawableSource) => source instanceof HTMLImageElement ? source.naturalWidth : source.width
 const getSourceHeight = (source: DrawableSource) => source instanceof HTMLImageElement ? source.naturalHeight : source.height
 
@@ -88,57 +69,12 @@ const createCanvas = (width: number, height: number) => {
   return canvas
 }
 
-const traceSelectionPath = (ctx: CanvasRenderingContext2D, sel: Selection, offsetX = 0, offsetY = 0) => {
-  ctx.beginPath()
-  if (sel.points?.length) {
-    sel.points.forEach((point, index) => {
-      const x = point.x + offsetX
-      const y = point.y + offsetY
-      if (index === 0) {
-        ctx.moveTo(x, y)
-      } else {
-        ctx.lineTo(x, y)
-      }
-    })
-    ctx.closePath()
-    return
-  }
-  ctx.rect(sel.x + offsetX, sel.y + offsetY, sel.w, sel.h)
-}
-
 const cloneColor = (color: RgbColor): RgbColor => ({ ...color })
 
 const computeResizeOffset = (targetSize: number, sourceSize: number, anchor: 'left' | 'center' | 'right' | 'top' | 'middle' | 'bottom') => {
   if (anchor === 'left' || anchor === 'top') return 0
   if (anchor === 'center' || anchor === 'middle') return Math.round((targetSize - sourceSize) / 2)
   return targetSize - sourceSize
-}
-
-const clampSelectionToBounds = (sel: Selection, width: number, height: number) => {
-  const maxX = width - 1
-  const maxY = height - 1
-  if (maxX < 0 || maxY < 0) return null
-
-  if (sel.points?.length) {
-    const points = sel.points.filter((point) => point.x >= 0 && point.x <= maxX && point.y >= 0 && point.y <= maxY)
-    if (points.length < 3) return null
-    const xs = points.map((point) => point.x)
-    const ys = points.map((point) => point.y)
-    return {
-      x: Math.min(...xs),
-      y: Math.min(...ys),
-      w: Math.max(...xs) - Math.min(...xs),
-      h: Math.max(...ys) - Math.min(...ys),
-      points,
-    }
-  }
-
-  const left = Math.max(0, sel.x)
-  const top = Math.max(0, sel.y)
-  const right = Math.min(width, sel.x + sel.w)
-  const bottom = Math.min(height, sel.y + sel.h)
-  if (right <= left || bottom <= top) return null
-  return { x: left, y: top, w: right - left, h: bottom - top }
 }
 
 const colorsAreSimilar = (a: RgbColor, b: RgbColor, tolerance: number) => (
@@ -191,6 +127,7 @@ export function useSpriteSheet() {
   const previewRef = useRef<HTMLCanvasElement | null>(null)
   const objectUrlRef = useRef<string | null>(null)
   const undoStackRef = useRef<UndoSnapshot[]>([])
+  const samplerCanvasRef = useRef<HTMLCanvasElement | null>(null)
 
   const revokeObjectUrl = (url: string | null) => {
     if (url?.startsWith('blob:')) {
@@ -243,17 +180,42 @@ export function useSpriteSheet() {
     })
   }
 
-  const sampleColorAt = (source: DrawableSource, point: Point): RgbColor | null => {
+  const getReadableContext = (source: DrawableSource) => {
+    if (source instanceof HTMLCanvasElement) {
+      return source.getContext('2d')
+    }
+
     const width = getSourceWidth(source)
     const height = getSourceHeight(source)
-    const x = Math.min(width - 1, Math.max(0, Math.floor(point.x)))
-    const y = Math.min(height - 1, Math.max(0, Math.floor(point.y)))
-    const canvas = cloneDrawableSource(source)
+    const canvas = samplerCanvasRef.current ?? createCanvas(width, height)
+    if (!samplerCanvasRef.current) {
+      samplerCanvasRef.current = canvas
+    }
+    if (canvas.width !== width || canvas.height !== height) {
+      canvas.width = width
+      canvas.height = height
+    }
     const ctx = canvas.getContext('2d')
     if (!ctx) return null
+    ctx.clearRect(0, 0, width, height)
+    ctx.drawImage(source, 0, 0)
+    return ctx
+  }
+
+  const readColorAt = (ctx: CanvasRenderingContext2D, width: number, height: number, point: Point): RgbColor | null => {
+    const x = Math.min(width - 1, Math.max(0, Math.floor(point.x)))
+    const y = Math.min(height - 1, Math.max(0, Math.floor(point.y)))
     const [r, g, b, a] = ctx.getImageData(x, y, 1, 1).data
     if (a === 0) return null
     return { r, g, b }
+  }
+
+  const sampleColorAt = (source: DrawableSource, point: Point): RgbColor | null => {
+    const width = getSourceWidth(source)
+    const height = getSourceHeight(source)
+    const ctx = getReadableContext(source)
+    if (!ctx) return null
+    return readColorAt(ctx, width, height, point)
   }
 
   const autoSampleBackgroundColor = (source = getDrawableSource()): RgbColor | null => {
@@ -261,6 +223,8 @@ export function useSpriteSheet() {
 
     const width = getSourceWidth(source)
     const height = getSourceHeight(source)
+    const ctx = getReadableContext(source)
+    if (!ctx) return null
     const corners = [
       { x: 0, y: 0 },
       { x: width - 1, y: 0 },
@@ -269,7 +233,7 @@ export function useSpriteSheet() {
     ]
 
     const colors = corners
-      .map((point) => sampleColorAt(source, point))
+      .map((point) => readColorAt(ctx, width, height, point))
       .filter((color): color is RgbColor => color !== null)
 
     if (!colors.length) return null

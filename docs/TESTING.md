@@ -8,10 +8,12 @@
 
 ## Philosophy
 
-This project is a React + Vite + TypeScript frontend, but it does not currently have a dedicated automated test suite.
+This project is a React + Vite + TypeScript frontend.
 
-Today, correctness is primarily established through:
-- static verification (`npm exec tsc --noEmit`)
+Correctness is currently established through:
+- static verification (`npm run typecheck`)
+- lint verification (`npm run lint`)
+- automated unit tests for extracted pure helpers (`npm run test`)
 - production build verification (`npm run build`)
 - manual smoke testing of the affected editor flows
 
@@ -19,16 +21,21 @@ Today, correctness is primarily established through:
 
 ## Testing Framework & Types
 
-- **Automated unit/integration tests**: Not currently configured
-- **Type checking**: TypeScript (`npm exec tsc --noEmit`)
+- **Automated unit tests**: Vitest (`npm run test`)
+- **Current unit-test focus**: extracted pure helpers such as selection geometry and image import utilities
+- **Type checking**: TypeScript (`npm run typecheck`)
+- **Linting**: ESLint (`npm run lint`)
 - **Build verification**: Vite production build (`npm run build`)
-- **Manual verification**: Required for editor interactions and canvas behavior
+- **Manual verification**: Still required for editor interactions and canvas behavior
 
 ---
 
 ## Directory Structure
 
-There is currently no dedicated `test/` or `__tests__/` structure in the repository.
+The repository currently keeps lightweight test files next to the extracted helper modules they cover.
+Current automated tests live in:
+- `src/modes/SpriteMode/selectionUtils.test.ts`
+- `src/modes/SpriteMode/importUtils.test.ts`
 
 ---
 
@@ -37,13 +44,31 @@ There is currently no dedicated `test/` or `__tests__/` structure in the reposit
 ### Type check
 
 ```bash
-npm exec tsc --noEmit
+npm run typecheck
+```
+
+### Lint
+
+```bash
+npm run lint
+```
+
+### Unit tests
+
+```bash
+npm run test
 ```
 
 ### Production build
 
 ```bash
 npm run build
+```
+
+### Full verification
+
+```bash
+npm run check
 ```
 
 ---
@@ -65,7 +90,7 @@ When editing sprite-editor behavior, manually validate the affected flows as nee
 
 ## Conventions & Rules
 
-If automated tests are introduced later, prioritize:
+When expanding automated coverage, continue to prioritize:
 - extracting pure canvas/state helpers from `useSpriteSheet.ts` where practical
 - testing deterministic editing logic independently from pointer-event wiring
 - keeping UI mocks minimal and focusing on user-visible behavior
@@ -74,5 +99,5 @@ If automated tests are introduced later, prioritize:
 
 ## Coverage Goals
 
-No automated coverage is currently tracked.
-The near-term goal is reliable build checks plus consistent manual regression coverage for changed features.
+Automated coverage is now present for a small set of extracted pure helpers, but broad coverage is still not tracked.
+The near-term goal is to expand unit coverage around deterministic editing helpers while keeping consistent manual regression coverage for changed interaction flows.

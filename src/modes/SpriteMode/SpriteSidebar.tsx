@@ -1,6 +1,8 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { Button, InputNumber, Switch, Tooltip } from '@arco-design/web-react'
 import { IconPlayArrow, IconPause, IconDownload, IconDragDotVertical, IconUpload, IconDragArrow, IconFullscreen, IconPenFill, IconRefresh } from '@arco-design/web-react/icon'
+import { loadImageFile } from './importUtils'
+import { traceSelectionPath } from './selectionUtils'
 import type { ResizeAnchor, SpriteSheetController } from './useSpriteSheet'
 
 interface SpriteSidebarProps {
@@ -12,24 +14,6 @@ const clampTolerance = (value: number | null | undefined) => Math.min(255, Math.
 const defaultResizeAnchor: ResizeAnchor = { x: 'center', y: 'middle' }
 const resizeAnchorRows: ResizeAnchor['y'][] = ['top', 'middle', 'bottom']
 const resizeAnchorCols: ResizeAnchor['x'][] = ['left', 'center', 'right']
-
-const traceSelectionPath = (ctx: CanvasRenderingContext2D, sel: NonNullable<SpriteSheetController['s']['sel']>) => {
-  ctx.beginPath()
-  if (sel.points?.length) {
-    sel.points.forEach((point, index) => {
-      const x = point.x - sel.x
-      const y = point.y - sel.y
-      if (index === 0) {
-        ctx.moveTo(x, y)
-      } else {
-        ctx.lineTo(x, y)
-      }
-    })
-    ctx.closePath()
-    return
-  }
-  ctx.rect(0, 0, sel.w, sel.h)
-}
 
 export default function SpriteSidebar({ spriteSheet }: SpriteSidebarProps) {
   const {
@@ -51,20 +35,16 @@ export default function SpriteSidebar({ spriteSheet }: SpriteSidebarProps) {
   const [resizeHeight, setResizeHeight] = useState(1)
   const [resizeAnchor, setResizeAnchor] = useState<ResizeAnchor>(defaultResizeAnchor)
 
+  const importFile = useCallback((file: File | null | undefined) => loadImageFile(file, loadImage), [loadImage])
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file || !file.type.startsWith('image/')) return
-    const url = URL.createObjectURL(file)
-    loadImage(url)
+    importFile(e.target.files?.[0])
     e.target.value = ''
   }
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault()
-    const file = e.dataTransfer.files[0]
-    if (!file || !file.type.startsWith('image/')) return
-    const url = URL.createObjectURL(file)
-    loadImage(url)
+    importFile(e.dataTransfer.files[0])
   }
 
   useEffect(() => {
@@ -73,27 +53,23 @@ export default function SpriteSidebar({ spriteSheet }: SpriteSidebarProps) {
       if (!items) return
       for (const item of items) {
         if (item.type.startsWith('image/')) {
-          const file = item.getAsFile()
-          if (file) {
-            const url = URL.createObjectURL(file)
-            loadImage(url)
-          }
+          importFile(item.getAsFile())
           break
         }
       }
     }
     window.addEventListener('paste', onPaste)
     return () => window.removeEventListener('paste', onPaste)
-  }, [loadImage])
+  }, [importFile])
 
   useEffect(() => {
-    const source = getDrawableSource()
+    const source = s.editCanvas ?? s.img
     if (!source) return
     const width = 'naturalWidth' in source ? source.naturalWidth : source.width
     const height = 'naturalHeight' in source ? source.naturalHeight : source.height
     setResizeWidth(width)
     setResizeHeight(height)
-  }, [s.img, s.editCanvas])
+  }, [s.editCanvas, s.img])
 
   const hasExportableSelection = !!s.sel && Math.round(s.sel.w) > 0 && Math.round(s.sel.h) > 0
   const hasBgSample = !!s.bgSampleColor
@@ -111,7 +87,7 @@ export default function SpriteSidebar({ spriteSheet }: SpriteSidebarProps) {
 
     if (s.sel.points?.length) {
       ec2.save()
-      traceSelectionPath(ec2, s.sel)
+      traceSelectionPath(ec2, s.sel, -s.sel.x, -s.sel.y)
       ec2.clip()
       ec2.drawImage(source, -s.sel.x, -s.sel.y)
       ec2.restore()

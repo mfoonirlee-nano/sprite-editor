@@ -32,7 +32,10 @@ User Input
 │   ├── modes/SpriteMode/
 │   │   ├── useSpriteSheet.ts   # core sprite editor state, undo history, and canvas edit logic
 │   │   ├── SpriteViewport.tsx  # viewport interactions and canvas surface
-│   │   └── SpriteSidebar.tsx   # controls, import/export, preview, background removal, resize
+│   │   ├── SpriteSidebar.tsx   # controls, import/export, preview, background removal, resize
+│   │   ├── selectionUtils.ts   # extracted pure selection geometry helpers
+│   │   ├── importUtils.ts      # extracted image import helpers
+│   │   └── *.test.ts           # helper-focused unit tests
 │   └── styles/                 # global styles
 ├── package.json
 └── README.md
@@ -46,7 +49,7 @@ User Input
 2. `src/App.tsx` owns one shared `useSpriteSheet()` instance and passes the controller into mode components.
 3. `useSpriteSheet.ts` owns editor state, canvas drawing, undo history, and destructive edit operations.
 4. `SpriteViewport.tsx` handles pointer-based interactions such as pan, zoom, selection creation, move commit, and background picking.
-5. `SpriteSidebar.tsx` exposes user actions and configuration, but should reuse controller methods instead of duplicating canvas logic.
+5. `SpriteSidebar.tsx` exposes user actions and configuration, but should reuse controller methods and extracted helpers instead of duplicating canvas logic.
 
 ---
 
@@ -57,7 +60,7 @@ User Input
 - **Floating selection workflow**: moving a selection uses `floatingCanvas` + `floatOffset` during interaction, then commits back into `editCanvas`.
 - **Undo model**: undo is scoped to destructive image edits, not transient UI state like pan/zoom/tool toggles.
 - **Interaction**: pointer-based viewport interactions handle pan, selection, lasso, movement, zoom, and background sampling.
-- **Build tooling**: Vite handles dev/build, TypeScript provides type checking.
+- **Build tooling**: Vite handles dev/build, TypeScript provides type checking, ESLint covers baseline static linting, and Vitest covers extracted pure helpers.
 
 ---
 
@@ -65,6 +68,6 @@ User Input
 
 - This is a React/Vite project, not a zero-dependency single-file app.
 - Shared editor state should be created once and passed down, not instantiated separately per panel.
-- Canvas-related behavior belongs in `useSpriteSheet.ts`; view components should stay thin.
+- Canvas-related behavior belongs in `useSpriteSheet.ts`; reusable pure geometry/import helpers should live beside the mode and be shared by view components.
 - Background removal, canvas resize, selection move commit, and undo are part of the same core editing pipeline.
 - Prefer updating existing files over creating new abstractions unless required.

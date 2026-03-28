@@ -35,10 +35,34 @@ npm install
 npm run dev
 ```
 
+### Type check
+
+```bash
+npm run typecheck
+```
+
+### Lint
+
+```bash
+npm run lint
+```
+
+### Test
+
+```bash
+npm run test
+```
+
 ### Production build
 
 ```bash
 npm run build
+```
+
+### Full check
+
+```bash
+npm run check
 ```
 
 ### Preview build
@@ -67,6 +91,10 @@ src/
 │   └── SpriteMode/
 │       ├── SpriteSidebar.tsx
 │       ├── SpriteViewport.tsx
+│       ├── importUtils.ts
+│       ├── importUtils.test.ts
+│       ├── selectionUtils.ts
+│       ├── selectionUtils.test.ts
 │       └── useSpriteSheet.ts
 └── styles/
 ```
@@ -75,7 +103,8 @@ src/
 
 - 当前主入口是 `index.html` + `src/main.tsx`
 - `sprite-editor.html` 如果仍存在，只应视为历史文件或参考文件，不是当前主工作流
-- 当前没有单独的自动化测试脚本，主要依赖 `npm run build` 与手工 smoke test 验证功能
+- 当前已提供最小自动化验证链路：`npm run typecheck`、`npm run lint`、`npm run test`、`npm run build`
+- 纯逻辑回归测试当前优先覆盖 `selectionUtils.ts` 与 `importUtils.ts`，复杂交互仍需手工 smoke test
 
 ## License
 
