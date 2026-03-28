@@ -2,7 +2,7 @@
 
 > Define how this project ensures correctness and quality through verification.
 >
-> **Last updated**: 2026-03-27
+> **Last updated**: 2026-03-28
 
 ---
 
@@ -36,6 +36,8 @@ The repository currently keeps lightweight test files next to the extracted help
 Current automated tests live in:
 - `src/modes/SpriteMode/selectionUtils.test.ts`
 - `src/modes/SpriteMode/importUtils.test.ts`
+
+UI layout changes such as left/right panel composition and right-panel collapse/expand are currently validated manually rather than through component tests.
 
 ---
 
@@ -82,9 +84,12 @@ When editing sprite-editor behavior, manually validate the affected flows as nee
 - selection movement and commit
 - background color pick and background removal
 - canvas resize with anchor positioning
-- undo for destructive edits
-- current-frame export and selection export
+- undo for destructive edits from the integrated left-toolbar undo control and via `Cmd/Ctrl+Z`
+- current-frame export, selection export, and full-image export
 - preview animation playback and frame switching
+- right panel collapse/expand behavior, including restoring the panel after collapse
+- left toolbar layout, including Pan / Rect / Lasso / Undo alignment and disabled undo behavior
+- left/right panel layout after moving frame settings, preview, and export to the right side
 
 ---
 

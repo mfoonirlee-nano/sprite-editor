@@ -3,13 +3,15 @@ import { Layout, Typography, Button, Space } from '@arco-design/web-react'
 import { IconInfoCircle } from '@arco-design/web-react/icon'
 import SpriteViewport from './modes/SpriteMode/SpriteViewport'
 import SpriteSidebar from './modes/SpriteMode/SpriteSidebar'
+import SpriteRightPanel from './modes/SpriteMode/SpriteRightPanel'
 import { useSpriteSheet } from './modes/SpriteMode/useSpriteSheet'
 
 const { Header, Sider, Content } = Layout
-const { Title, Text } = Typography
+const { Title } = Typography
 
 export default function App() {
   const spriteSheet = useSpriteSheet()
+  const [isRightPanelCollapsed, setIsRightPanelCollapsed] = React.useState(false)
 
   React.useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
@@ -44,39 +46,41 @@ export default function App() {
   }, [spriteSheet])
 
   return (
-    <Layout className="h-screen bg-[#0f0f13] text-[#e8e8f0] overflow-hidden">
-      <Header className="h-14 border-b border-[#2e2e40] bg-[#1a1a22] flex items-center justify-between px-6 shrink-0">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded bg-gradient-to-br from-[#7c6af7] to-[#56cfb2] flex items-center justify-center shadow-lg shadow-[#7c6af7]/20">
-            <span className="text-white font-black text-lg leading-none" style={{ fontFamily: 'monospace' }}>S</span>
+    <Layout className="h-screen overflow-hidden bg-[var(--bg)] text-[var(--text)]">
+      <Header className="flex h-14 shrink-0 items-center justify-between border-b border-[var(--sidebar-divider)] bg-[var(--shell)] px-4">
+        <div className="flex items-center gap-2.5">
+          <div className="flex h-7 w-7 items-center justify-center rounded-2xl border border-[var(--sidebar-divider)] bg-[var(--sidebar-elevated)]">
+            <span className="text-[12px] font-semibold leading-none text-[var(--muted)]" style={{ fontFamily: 'monospace' }}>S</span>
           </div>
-          <div>
-            <Title style={{ color: '#e8e8f0', margin: 0, fontSize: '16px', fontWeight: 600, lineHeight: 1.2 }}>
-              Sprite Editor
-            </Title>
-            <Text style={{ color: '#8888a8', fontSize: '12px' }}>
-              Sequence Frame Tool
-            </Text>
-          </div>
+          <Title style={{ color: 'var(--text)', margin: 0, fontSize: '14px', fontWeight: 600, lineHeight: 1.2 }}>
+            Sprite Editor
+          </Title>
         </div>
 
-        <Space size="medium">
-          <Button type="text" icon={<IconInfoCircle />} style={{ color: '#8888a8' }}>
+        <Space size="small">
+          <Button type="text" icon={<IconInfoCircle />} style={{ color: 'var(--muted)' }} className="rounded-full border border-transparent px-2.5 hover:border-[var(--sidebar-divider)] hover:bg-[var(--sidebar-elevated)] hover:text-[var(--text)]">
             Shortcuts
           </Button>
         </Space>
       </Header>
 
-      <Layout className="flex-1 overflow-hidden relative">
+      <Layout className="relative flex-1 overflow-hidden">
         <Sider
           width={340}
-          className="border-r border-[#2e2e40] bg-[#12121a] flex flex-col shrink-0"
+          className="flex shrink-0 flex-col border-r border-[var(--sidebar-divider)] bg-[var(--sidebar)]"
         >
           <SpriteSidebar spriteSheet={spriteSheet} />
         </Sider>
 
-        <Content className="bg-[#0f0f13] relative overflow-hidden flex flex-col">
-          <SpriteViewport spriteSheet={spriteSheet} />
+        <Content className="relative flex overflow-hidden bg-[var(--bg)]">
+          <div className="flex min-w-0 flex-1">
+            <SpriteViewport spriteSheet={spriteSheet} />
+          </div>
+          <SpriteRightPanel
+            spriteSheet={spriteSheet}
+            collapsed={isRightPanelCollapsed}
+            onToggleCollapsed={() => setIsRightPanelCollapsed((prev) => !prev)}
+          />
         </Content>
       </Layout>
     </Layout>
