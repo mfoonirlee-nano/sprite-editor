@@ -14,7 +14,7 @@ Correctness is currently established through:
 - static verification (`npm run typecheck`)
 - lint verification (`npm run lint`)
 - automated unit tests for focused deterministic SpriteMode logic (`npm run test`)
-- production build verification (`npm run build`)
+- production build verification (`npm run build`), including checking that generated HTML uses relative `./...` asset references
 - manual smoke testing of the affected editor flows
 
 ---

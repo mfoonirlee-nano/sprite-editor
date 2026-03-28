@@ -13,7 +13,7 @@
 | --------------- | -------------------------------------- |
 | **Platform**    | Local / Static Hosting                 |
 | **Runtime**     | Web Browser                            |
-| **Output mode** | Vite-built static frontend application |
+| **Output mode** | Vite-built static frontend application with relative `./` asset paths |
 | **Region**      | N/A                                    |
 | **Domain**      | N/A                                    |
 
