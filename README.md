@@ -6,13 +6,15 @@
 
 - 点击、拖拽或粘贴导入图片
 - 平移、矩形选区、套索选区
+- 左侧工具栏内置 Undo 快捷操作
 - 选区移动并提交回画布
 - 单帧预览与动画播放
-- 网格与帧参数配置
+- 网格与帧参数配置（右侧面板）
 - 背景取色与快速去除背景
 - 无拉伸 canvas resize（透明补边 / 按锚点裁切）
 - 破坏性编辑撤销（Undo）
-- 导出当前帧或当前选区
+- 导出当前帧、当前选区或整张图片
+- 右侧面板支持收起/展开，方便给画布腾出更多空间
 
 ## Shortcuts
 
@@ -90,6 +92,7 @@ src/
 ├── modes/
 │   └── SpriteMode/
 │       ├── SpriteSidebar.tsx
+│       ├── SpriteRightPanel.tsx
 │       ├── SpriteViewport.tsx
 │       ├── importUtils.ts
 │       ├── importUtils.test.ts
@@ -104,6 +107,9 @@ src/
 - 当前主入口是 `index.html` + `src/main.tsx`
 - `sprite-editor.html` 如果仍存在，只应视为历史文件或参考文件，不是当前主工作流
 - 当前已提供最小自动化验证链路：`npm run typecheck`、`npm run lint`、`npm run test`、`npm run build`
+- 左侧面板当前负责顶部工具栏（Pan / Rect / Lasso / Undo）、导入、背景去除和画布尺寸；右侧面板负责帧设置、预览动画和导出
+- 右侧面板支持收起/展开；收起只影响布局，不改变当前编辑状态
+- 导出区支持 `Selection`、`Current Frame` 和 `Full Image`
 - 纯逻辑回归测试当前优先覆盖 `selectionUtils.ts` 与 `importUtils.ts`，复杂交互仍需手工 smoke test
 
 ## License

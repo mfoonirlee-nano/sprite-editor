@@ -14,6 +14,16 @@
   --muted: #8b8b99;
   --border: #292933;
   --input-bg: #101014;
+  --shell: #101015;
+  --sidebar: #121218;
+  --sidebar-elevated: #17171d;
+  --sidebar-muted: #1c1c24;
+  --sidebar-hover: rgba(255, 255, 255, 0.04);
+  --sidebar-selected: rgba(124, 106, 247, 0.16);
+  --sidebar-selected-border: rgba(124, 106, 247, 0.42);
+  --sidebar-focus: rgba(124, 106, 247, 0.18);
+  --sidebar-divider: rgba(255, 255, 255, 0.07);
+  --sidebar-shadow: 0 10px 30px rgba(0, 0, 0, 0.14);
 }
 
 html, body, #root {
@@ -33,7 +43,7 @@ body[arco-theme='dark'] {
   --color-bg-3: var(--panel2);
   --color-bg-4: var(--panel2);
   --color-bg-5: var(--panel2);
-  
+
   --color-border-1: var(--border);
   --color-border-2: var(--border);
   --color-border-3: var(--border);
@@ -57,6 +67,10 @@ body[arco-theme='dark'] {
   --color-primary-7: #9481ff;
   --color-success-light-1: rgba(86, 207, 178, 0.1);
   --color-success-6: var(--accent2);
+
+  --color-secondary: var(--sidebar-elevated);
+  --color-secondary-hover: var(--sidebar-muted);
+  --color-secondary-active: #22222c;
 }
 
 /* 像素渲染基线 */
@@ -74,13 +88,114 @@ body[arco-theme='dark'] {
   background-size: 24px 24px;
 }
 
+.sidebar-section {
+  background: var(--sidebar-elevated);
+  border: 1px solid var(--sidebar-divider);
+  border-radius: 18px;
+  box-shadow: none;
+}
+
+.sidebar-chip {
+  border: 1px solid var(--sidebar-divider);
+  background: var(--sidebar-elevated);
+  color: var(--muted);
+}
+
+.sidebar-interactive {
+  transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease, box-shadow 160ms ease;
+}
+
+.sidebar-interactive:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 4px var(--sidebar-focus);
+}
+
+.sidebar-subtle-button {
+  background: var(--sidebar-muted);
+  border: 1px solid var(--sidebar-divider);
+  color: var(--text);
+}
+
+.sidebar-subtle-button:hover {
+  background: #23232c;
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.sidebar-title {
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.sidebar-caption {
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+body[arco-theme='dark'] .arco-input-wrapper,
+body[arco-theme='dark'] .arco-input-number,
+body[arco-theme='dark'] .arco-btn-secondary,
+body[arco-theme='dark'] .arco-btn-default {
+  border-radius: 14px;
+}
+
+body[arco-theme='dark'] .arco-input-wrapper,
+body[arco-theme='dark'] .arco-input-number {
+  background: var(--input-bg);
+  border-color: var(--sidebar-divider);
+  box-shadow: none;
+}
+
+body[arco-theme='dark'] .arco-input-wrapper:hover,
+body[arco-theme='dark'] .arco-input-number:hover,
+body[arco-theme='dark'] .arco-input-wrapper:focus-within,
+body[arco-theme='dark'] .arco-input-number:focus-within {
+  border-color: var(--sidebar-selected-border);
+  background: #14141a;
+}
+
+body[arco-theme='dark'] .arco-input-wrapper:focus-within,
+body[arco-theme='dark'] .arco-input-number:focus-within,
+body[arco-theme='dark'] .arco-btn:focus-visible {
+  box-shadow: 0 0 0 4px var(--sidebar-focus);
+}
+
+body[arco-theme='dark'] .arco-btn-secondary,
+body[arco-theme='dark'] .arco-btn-default {
+  background: var(--sidebar-muted);
+  border-color: var(--sidebar-divider);
+  color: var(--text);
+}
+
+body[arco-theme='dark'] .arco-btn-secondary:hover,
+body[arco-theme='dark'] .arco-btn-default:hover {
+  background: #22222b;
+  border-color: rgba(255, 255, 255, 0.1);
+  color: var(--text);
+}
+
+body[arco-theme='dark'] .arco-btn-primary {
+  border-radius: 14px;
+  box-shadow: none;
+}
+
+body[arco-theme='dark'] .arco-switch {
+  background: var(--sidebar-muted);
+}
+
+body[arco-theme='dark'] .arco-switch.arco-switch-checked {
+  background: rgba(124, 106, 247, 0.72);
+}
+
 /* 针对右下角预览图背景 */
 .preview-canvas-bg {
   background-image:
-    linear-gradient(45deg, #1f1f26 25%, transparent 25%),
-    linear-gradient(-45deg, #1f1f26 25%, transparent 25%),
-    linear-gradient(45deg, transparent 75%, #1f1f26 75%),
-    linear-gradient(-45deg, transparent 75%, #1f1f26 75%);
+    linear-gradient(45deg, #1d1d23 25%, transparent 25%),
+    linear-gradient(-45deg, #1d1d23 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #1d1d23 75%),
+    linear-gradient(-45deg, transparent 75%, #1d1d23 75%);
   background-size: 12px 12px;
   background-position: 0 0, 0 6px, 6px 6px, 6px 0;
 }
