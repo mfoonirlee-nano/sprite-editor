@@ -1,15 +1,6 @@
-export interface Point {
-  x: number
-  y: number
-}
+import type { Point, Selection } from '../types/selectionTypes'
 
-export interface Selection {
-  x: number
-  y: number
-  w: number
-  h: number
-  points?: Point[]
-}
+export type { Point, Selection } from '../types/selectionTypes'
 
 export const cloneSelection = (sel: Selection): Selection => ({
   ...sel,

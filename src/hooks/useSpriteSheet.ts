@@ -1,87 +1,18 @@
 import { useEffect, useRef, useState } from 'react'
-import { clampSelectionToBounds, cloneSelection, traceSelectionPath, translateSelection } from './selectionUtils'
-import type { Point, Selection } from './selectionUtils'
-
-export type Tool = 'pan' | 'select' | 'lasso'
-
-type DrawableSource = HTMLImageElement | HTMLCanvasElement
-export type RgbColor = { r: number; g: number; b: number }
-export type ResizeAnchorX = 'left' | 'center' | 'right'
-export type ResizeAnchorY = 'top' | 'middle' | 'bottom'
-export interface ResizeAnchor {
-  x: ResizeAnchorX
-  y: ResizeAnchorY
-}
-
-export interface SpriteState {
-  img: HTMLImageElement | null
-  imgSrc: string
-  panX: number
-  panY: number
-  zoom: number
-  tool: Tool
-  selType: 'rect' | 'lasso'
-  sel: Selection | null
-  lassoDrawing: boolean
-  lassoPoints: Point[]
-  currentFrame: number
-  isPlaying: boolean
-  timer: number
-  lastTime: number
-  showGrid: boolean
-  dragging: boolean
-  panStart: { x: number; y: number } | null
-  selStart: Point | null
-  movingSel: boolean
-  moveSelStart: { imgPt: Point; selSnap: Selection } | null
-  editCanvas: HTMLCanvasElement | null
-  floatingCanvas: HTMLCanvasElement | null
-  floatOffset: Point
-  antsOffset: number
-  fw: number
-  fh: number
-  fcount: number
-  fps: number
-  ox: number
-  oy: number
-  bgRemovalTolerance: number
-  bgSampleColor: RgbColor | null
-  bgPickMode: boolean
-}
+import { clampSelectionToBounds, cloneSelection, traceSelectionPath, translateSelection } from '../utils/selectionUtils'
+import type { Point } from '../types/selectionTypes'
+import { cloneColor, colorsAreSimilar, computeResizeOffset, createCanvas, getSourceHeight, getSourceWidth, readColorAt } from '../utils/spriteSheetCanvasUtils'
+import type { DrawableSource, ResizeAnchor, RgbColor, SpriteState } from '../types/spriteSheetTypes'
 
 interface UndoSnapshot {
   img: HTMLImageElement | null
   imgSrc: string
   editCanvas: HTMLCanvasElement | null
-  sel: Selection | null
-  selType: 'rect' | 'lasso'
+  sel: SpriteState['sel']
+  selType: SpriteState['selType']
   currentFrame: number
   bgSampleColor: RgbColor | null
 }
-
-const getSourceWidth = (source: DrawableSource) => source instanceof HTMLImageElement ? source.naturalWidth : source.width
-const getSourceHeight = (source: DrawableSource) => source instanceof HTMLImageElement ? source.naturalHeight : source.height
-
-const createCanvas = (width: number, height: number) => {
-  const canvas = document.createElement('canvas')
-  canvas.width = Math.max(1, Math.ceil(width))
-  canvas.height = Math.max(1, Math.ceil(height))
-  return canvas
-}
-
-const cloneColor = (color: RgbColor): RgbColor => ({ ...color })
-
-const computeResizeOffset = (targetSize: number, sourceSize: number, anchor: 'left' | 'center' | 'right' | 'top' | 'middle' | 'bottom') => {
-  if (anchor === 'left' || anchor === 'top') return 0
-  if (anchor === 'center' || anchor === 'middle') return Math.round((targetSize - sourceSize) / 2)
-  return targetSize - sourceSize
-}
-
-const colorsAreSimilar = (a: RgbColor, b: RgbColor, tolerance: number) => (
-  Math.abs(a.r - b.r) <= tolerance &&
-  Math.abs(a.g - b.g) <= tolerance &&
-  Math.abs(a.b - b.b) <= tolerance
-)
 
 export function useSpriteSheet() {
   const [canUndo, setCanUndo] = useState(false)
@@ -200,14 +131,6 @@ export function useSpriteSheet() {
     ctx.clearRect(0, 0, width, height)
     ctx.drawImage(source, 0, 0)
     return ctx
-  }
-
-  const readColorAt = (ctx: CanvasRenderingContext2D, width: number, height: number, point: Point): RgbColor | null => {
-    const x = Math.min(width - 1, Math.max(0, Math.floor(point.x)))
-    const y = Math.min(height - 1, Math.max(0, Math.floor(point.y)))
-    const [r, g, b, a] = ctx.getImageData(x, y, 1, 1).data
-    if (a === 0) return null
-    return { r, g, b }
   }
 
   const sampleColorAt = (source: DrawableSource, point: Point): RgbColor | null => {

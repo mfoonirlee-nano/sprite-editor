@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
-import { isImageFile, loadImageFile } from './importUtils'
+import { isImageFile, loadImageFile } from '../../utils/spriteSheetImport'
 
-describe('importUtils', () => {
+describe('SpriteMode image import helpers', () => {
   it('accepts only image files', () => {
     expect(isImageFile(new File(['x'], 'sprite.png', { type: 'image/png' }))).toBe(true)
     expect(isImageFile(new File(['x'], 'notes.txt', { type: 'text/plain' }))).toBe(false)

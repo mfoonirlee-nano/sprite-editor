@@ -65,8 +65,11 @@
 ## Coding Rules
 
 - **Architecture**: Shared editor state is created once in `useSpriteSheet()` and passed down from `src/App.tsx`.
-- **Ownership**: Canvas editing logic belongs in `src/modes/SpriteMode/useSpriteSheet.ts`; UI components should stay thin.
-- **Viewport/UI split**: Pointer interaction belongs in `SpriteViewport.tsx`; controls/import/export belong in `SpriteSidebar.tsx`.
+- **Ownership**: The shared sprite editor controller lives in `src/hooks/useSpriteSheet.ts`; shell and presentation components should stay thin.
+- **Business-code aggregation**: For `src/` business feature code, keep cohesive feature workflows easy to find, but it is acceptable to split a controller into a small set of shared modules under `src/types/` and `src/utils/` when that materially improves ownership.
+- **File-size bias**: For business code, cohesive files over 300 lines are acceptable when they keep one workflow discoverable in one place; this does not apply to entrypoints, tests, docs, styles, or other non-business files.
+- **Helper extraction**: Extract a new helper or abstraction when reuse, isolated test value, or a clearer controller boundary justifies it.
+- **Viewport/UI split**: Pointer interaction belongs in `SpriteViewport.tsx`; controls/import/export belong in `SpriteSidebar.tsx` and `SpriteRightPanel.tsx`.
 - **Styling**: Preserve the current dark theme and existing Arco + Tailwind patterns.
 - **Canvas rendering**: Keep `image-rendering: pixelated` for sprite clarity.
 - **Dependencies**: Reuse the current stack. Do not add new dependencies unless the task clearly requires them.

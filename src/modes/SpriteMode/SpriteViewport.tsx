@@ -1,6 +1,6 @@
 import React from 'react'
-import type { SpriteSheetController } from './useSpriteSheet'
-import { isPointInSelection } from './selectionUtils'
+import type { SpriteSheetController } from '../../hooks/useSpriteSheet'
+import { isPointInSelection } from '../../utils/selectionUtils'
 
 interface SpriteViewportProps {
   spriteSheet: SpriteSheetController

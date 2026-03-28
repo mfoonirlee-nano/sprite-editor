@@ -18,7 +18,7 @@
 该迁移现已完成，当前仓库已经采用如下结构：
 - `index.html` + `src/main.tsx` 作为主入口
 - `src/App.tsx` 负责应用骨架与共享 controller 挂载
-- `src/modes/SpriteMode/useSpriteSheet.ts` 负责核心编辑状态与 canvas 编辑逻辑
+- `src/hooks/useSpriteSheet.ts` 负责核心编辑状态与 canvas 编辑逻辑
 - `src/modes/SpriteMode/SpriteViewport.tsx` 负责视口交互
 - `src/modes/SpriteMode/SpriteSidebar.tsx` 负责控制面板、导入导出与编辑入口
 
@@ -37,7 +37,7 @@
 - `App.tsx`
 - `SpriteViewport.tsx`
 - `SpriteSidebar.tsx`
-- `useSpriteSheet.ts`
+- `src/hooks/useSpriteSheet.ts`
 
 这属于实现细节演进，不影响该计划已完成的结论。
 

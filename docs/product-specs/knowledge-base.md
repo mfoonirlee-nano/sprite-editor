@@ -11,27 +11,27 @@
 
 ### Image Import
 - **Description**: Import images through click-to-upload, drag-and-drop, or paste.
-- **Key files**: `src/modes/SpriteMode/SpriteSidebar.tsx`, `src/modes/SpriteMode/useSpriteSheet.ts`
+- **Key files**: `src/modes/SpriteMode/SpriteSidebar.tsx`, `src/hooks/useSpriteSheet.ts`, `src/utils/spriteSheetImport.ts`
 - **Status**: Active
 
 ### Viewport Navigation & Selection
 - **Description**: Supports pan, wheel zoom, rectangle selection, lasso selection, and hover-aware selection movement.
-- **Key files**: `src/modes/SpriteMode/SpriteViewport.tsx`, `src/modes/SpriteMode/useSpriteSheet.ts`
+- **Key files**: `src/modes/SpriteMode/SpriteViewport.tsx`, `src/hooks/useSpriteSheet.ts`, `src/utils/selectionUtils.ts`, `src/types/selectionTypes.ts`
 - **Status**: Active
 
 ### Sprite Frame Configuration & Preview
 - **Description**: Lets users configure frame width/height/count/FPS, view grid overlays, preview the current frame, and play animation.
-- **Key files**: `src/modes/SpriteMode/SpriteSidebar.tsx`, `src/modes/SpriteMode/useSpriteSheet.ts`
+- **Key files**: `src/modes/SpriteMode/SpriteSidebar.tsx`, `src/modes/SpriteMode/SpriteRightPanel.tsx`, `src/hooks/useSpriteSheet.ts`
 - **Status**: Active
 
 ### Destructive Image Editing
 - **Description**: Supports background sampling/removal, reset image edits, canvas resize without stretching, and selection move commit.
-- **Key files**: `src/modes/SpriteMode/useSpriteSheet.ts`, `src/modes/SpriteMode/SpriteSidebar.tsx`
+- **Key files**: `src/hooks/useSpriteSheet.ts`, `src/utils/spriteSheetCanvasUtils.ts`, `src/modes/SpriteMode/SpriteSidebar.tsx`
 - **Status**: Active
 
 ### Undo
 - **Description**: Supports undo for destructive image-edit operations via sidebar button and `Cmd/Ctrl+Z`.
-- **Key files**: `src/App.tsx`, `src/modes/SpriteMode/useSpriteSheet.ts`, `src/modes/SpriteMode/SpriteSidebar.tsx`
+- **Key files**: `src/App.tsx`, `src/hooks/useSpriteSheet.ts`, `src/modes/SpriteMode/SpriteSidebar.tsx`
 - **Status**: Active
 
 ### Export Tools
@@ -63,9 +63,11 @@ Key state groups include:
 |---------|------|
 | React entrypoint | `src/main.tsx` |
 | App shell / global shortcuts | `src/App.tsx` |
-| Core editor controller | `src/modes/SpriteMode/useSpriteSheet.ts` |
+| Core editor controller | `src/hooks/useSpriteSheet.ts` |
+| Shared sprite/domain types | `src/types/selectionTypes.ts`, `src/types/spriteSheetTypes.ts` |
+| Shared sprite utilities | `src/utils/selectionUtils.ts`, `src/utils/spriteSheetImport.ts`, `src/utils/spriteSheetCanvasUtils.ts` |
 | Viewport interaction layer | `src/modes/SpriteMode/SpriteViewport.tsx` |
-| Sidebar controls / import / export | `src/modes/SpriteMode/SpriteSidebar.tsx` |
+| Sidebar controls / import / export | `src/modes/SpriteMode/SpriteSidebar.tsx`, `src/modes/SpriteMode/SpriteRightPanel.tsx` |
 | Global styles | `src/styles/index.css` |
 | Project metadata | `package.json`, `README.md`, `ARCHITECTURE.md` |
 | Historical reference file | `sprite-editor.html` |

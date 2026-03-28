@@ -89,16 +89,22 @@ npm run preview
 src/
 ├── App.tsx
 ├── main.tsx
+├── hooks/
+│   └── useSpriteSheet.ts
+├── types/
+│   ├── selectionTypes.ts
+│   └── spriteSheetTypes.ts
+├── utils/
+│   ├── selectionUtils.ts
+│   ├── spriteSheetCanvasUtils.ts
+│   └── spriteSheetImport.ts
 ├── modes/
 │   └── SpriteMode/
 │       ├── SpriteSidebar.tsx
 │       ├── SpriteRightPanel.tsx
 │       ├── SpriteViewport.tsx
-│       ├── importUtils.ts
 │       ├── importUtils.test.ts
-│       ├── selectionUtils.ts
-│       ├── selectionUtils.test.ts
-│       └── useSpriteSheet.ts
+│       └── selectionUtils.test.ts
 └── styles/
 ```
 
@@ -110,7 +116,7 @@ src/
 - 左侧面板当前负责顶部工具栏（Pan / Rect / Lasso / Undo）、导入、背景去除和画布尺寸；右侧面板负责帧设置、预览动画和导出
 - 右侧面板支持收起/展开；收起只影响布局，不改变当前编辑状态
 - 导出区支持 `Selection`、`Current Frame` 和 `Full Image`
-- 纯逻辑回归测试当前优先覆盖 `selectionUtils.ts` 与 `importUtils.ts`，复杂交互仍需手工 smoke test
+- 纯逻辑回归测试当前优先覆盖 SpriteMode 的选择几何与图片导入逻辑，复杂交互仍需手工 smoke test
 
 ## License
 

@@ -14,7 +14,7 @@ Improve the current React-based sprite editing experience by stabilizing editing
 
 - Improve editor stability and UX for destructive editing flows
 - Keep product and architecture docs synchronized with shipped behavior
-- Reduce complexity in the core `useSpriteSheet()` editing pipeline over time
+- Continue reducing complexity in the core `src/hooks/useSpriteSheet.ts` editing pipeline over time
 - Strengthen verification beyond build-only checks where it is cheap and practical
 
 ## Future Ideas
