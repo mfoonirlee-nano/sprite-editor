@@ -7,6 +7,7 @@
 3. **Docs must ship with code.** Any change to product behavior, architecture, commands, workflow, or plan status must update the relevant docs in the same task.
 4. **Keep indexes and status docs consistent.** When adding, moving, or reclassifying docs, update the corresponding `index.md`, `STATE.md`, and `DECISIONS.md` entries where applicable.
 5. **Self-review before handoff.** Before declaring a task complete, verify the implementation, verify docs, and summarize what changed.
+6. **Initialize Skills.** Before executing any action, you must first traverse the `.claude/skills` directory to obtain available skills, and initialize the relevant ones to ensure task-specific workflows and rules are applied.
 
 > Skipping relevant documentation updates means the task is incomplete.
 
