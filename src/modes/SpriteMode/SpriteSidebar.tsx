@@ -1,19 +1,17 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { Button, InputNumber, Tooltip } from '@arco-design/web-react'
-import { IconDragDotVertical, IconUpload, IconDragArrow, IconFullscreen, IconPenFill, IconRefresh, IconUndo } from '@arco-design/web-react/icon'
-import { loadImageFile } from '../../utils/spriteSheetImport'
-import type { ResizeAnchor } from '../../types/spriteSheetTypes'
+import { IconDragArrow, IconDragDotVertical, IconFullscreen, IconPenFill, IconRefresh, IconSelectAll, IconUndo, IconUpload } from '@arco-design/web-react/icon'
+import { DefaultResizeAnchor, MaxColorChannelValue, MinimumPositiveValue, ResizeAnchorColumns, ResizeAnchorRows } from '../../constants/spriteSheetConstants'
 import type { SpriteSheetController } from '../../hooks/useSpriteSheet'
+import type { ResizeAnchor } from '../../types/spriteSheetTypes'
+import { loadImageFile } from '../../utils/spriteSheetImport'
 
 interface SpriteSidebarProps {
   spriteSheet: SpriteSheetController
 }
 
-const clampPositive = (value: number | null | undefined, fallback: number) => Math.max(1, Number(value) || fallback)
-const clampTolerance = (value: number | null | undefined) => Math.min(255, Math.max(0, Number(value) || 0))
-const defaultResizeAnchor: ResizeAnchor = { x: 'center', y: 'middle' }
-const resizeAnchorRows: ResizeAnchor['y'][] = ['top', 'middle', 'bottom']
-const resizeAnchorCols: ResizeAnchor['x'][] = ['left', 'center', 'right']
+const clampPositive = (value: number | null | undefined, fallback: number) => Math.max(MinimumPositiveValue, Number(value) || fallback)
+const clampTolerance = (value: number | null | undefined) => Math.min(MaxColorChannelValue, Math.max(0, Number(value) || 0))
 
 export default function SpriteSidebar({ spriteSheet }: SpriteSidebarProps) {
   const {
@@ -31,7 +29,7 @@ export default function SpriteSidebar({ spriteSheet }: SpriteSidebarProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [resizeWidth, setResizeWidth] = useState(1)
   const [resizeHeight, setResizeHeight] = useState(1)
-  const [resizeAnchor, setResizeAnchor] = useState<ResizeAnchor>(defaultResizeAnchor)
+  const [resizeAnchor, setResizeAnchor] = useState<ResizeAnchor>(DefaultResizeAnchor)
 
   const importFile = useCallback((file: File | null | undefined) => loadImageFile(file, loadImage), [loadImage])
 
@@ -104,6 +102,16 @@ export default function SpriteSidebar({ spriteSheet }: SpriteSidebarProps) {
             onClick={() => setS(prev => ({ ...prev, tool: 'lasso', selType: 'lasso' }))}
           >
             <IconPenFill /> Lasso
+          </button>
+        </Tooltip>
+        <Tooltip content="Frame Pick (F)">
+          <button
+            className={`sidebar-interactive flex-1 flex items-center justify-center gap-1.5 rounded-xl py-1.5 text-xs duration-200 ${
+              s.tool === 'framePick' ? 'border border-[var(--sidebar-selected-border)] bg-[var(--sidebar-selected)] text-[var(--text)]' : 'text-[var(--muted)] hover:bg-[var(--sidebar-hover)] hover:text-[var(--text)]'
+            }`}
+            onClick={() => setS(prev => ({ ...prev, tool: 'framePick', selType: 'rect' }))}
+          >
+            <IconSelectAll /> Pick
           </button>
         </Tooltip>
         <div className="mx-1 my-1 w-px shrink-0 bg-[var(--sidebar-divider)]" />
@@ -192,7 +200,7 @@ export default function SpriteSidebar({ spriteSheet }: SpriteSidebarProps) {
             <div className="mb-3">
               <div className="sidebar-caption mb-2 pl-1">Anchor</div>
               <div className="grid grid-cols-3 gap-1.5">
-                {resizeAnchorRows.flatMap((row) => resizeAnchorCols.map((col) => {
+                {ResizeAnchorRows.flatMap((row) => ResizeAnchorColumns.map((col) => {
                   const active = resizeAnchor.x === col && resizeAnchor.y === row
                   return (
                     <button

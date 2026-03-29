@@ -1,7 +1,8 @@
 import { Button, InputNumber, Switch, Tooltip } from '@arco-design/web-react'
-import { IconPlayArrow, IconPause, IconDownload, IconDragDotVertical, IconLeft, IconRight } from '@arco-design/web-react/icon'
-import { traceSelectionPath } from '../../utils/selectionUtils'
+import { IconDownload, IconDragDotVertical, IconLeft, IconPause, IconPlayArrow, IconRight } from '@arco-design/web-react/icon'
+import { DefaultFrameHeight, DefaultFrameWidth, DefaultFramesPerSecond, MinimumPositiveValue } from '../../constants/spriteSheetConstants'
 import type { SpriteSheetController } from '../../hooks/useSpriteSheet'
+import { traceSelectionPath } from '../../utils/selectionUtils'
 
 interface SpriteRightPanelProps {
   collapsed: boolean
@@ -9,7 +10,7 @@ interface SpriteRightPanelProps {
   spriteSheet: SpriteSheetController
 }
 
-const clampPositive = (value: number | null | undefined, fallback: number) => Math.max(1, Number(value) || fallback)
+const clampPositive = (value: number | null | undefined, fallback: number) => Math.max(MinimumPositiveValue, Number(value) || fallback)
 
 const getSourceWidth = (source: HTMLImageElement | HTMLCanvasElement) => 'naturalWidth' in source ? source.naturalWidth : source.width
 const getSourceHeight = (source: HTMLImageElement | HTMLCanvasElement) => 'naturalHeight' in source ? source.naturalHeight : source.height
@@ -121,19 +122,19 @@ export default function SpriteRightPanel({ collapsed, onToggleCollapsed, spriteS
                 <div className="mb-3 grid grid-cols-2 gap-3">
                   <div>
                     <div className="sidebar-caption mb-1.5 pl-1">Width</div>
-                    <InputNumber size="small" value={s.fw} onChange={(v) => { setS(prev => ({ ...prev, fw: clampPositive(v, 64) })) }} className="border-[var(--sidebar-divider)] bg-[var(--input-bg)] hover:border-[var(--sidebar-selected-border)]" />
+                    <InputNumber size="small" value={s.fw} onChange={(v) => { setS(prev => ({ ...prev, fw: clampPositive(v, DefaultFrameWidth) })) }} className="border-[var(--sidebar-divider)] bg-[var(--input-bg)] hover:border-[var(--sidebar-selected-border)]" />
                   </div>
                   <div>
                     <div className="sidebar-caption mb-1.5 pl-1">Height</div>
-                    <InputNumber size="small" value={s.fh} onChange={(v) => { setS(prev => ({ ...prev, fh: clampPositive(v, 64) })) }} className="border-[var(--sidebar-divider)] bg-[var(--input-bg)] hover:border-[var(--sidebar-selected-border)]" />
+                    <InputNumber size="small" value={s.fh} onChange={(v) => { setS(prev => ({ ...prev, fh: clampPositive(v, DefaultFrameHeight) })) }} className="border-[var(--sidebar-divider)] bg-[var(--input-bg)] hover:border-[var(--sidebar-selected-border)]" />
                   </div>
                   <div>
                     <div className="sidebar-caption mb-1.5 pl-1">Frames</div>
-                    <InputNumber size="small" value={s.fcount} onChange={(v) => { setS(prev => ({ ...prev, fcount: clampPositive(v, 1), currentFrame: Math.min(prev.currentFrame, clampPositive(v, 1) - 1) })) }} className="border-[var(--sidebar-divider)] bg-[var(--input-bg)] hover:border-[var(--sidebar-selected-border)]" />
+                    <InputNumber size="small" value={s.fcount} onChange={(v) => { setS(prev => ({ ...prev, fcount: clampPositive(v, MinimumPositiveValue), currentFrame: Math.min(prev.currentFrame, clampPositive(v, MinimumPositiveValue) - 1) })) }} className="border-[var(--sidebar-divider)] bg-[var(--input-bg)] hover:border-[var(--sidebar-selected-border)]" />
                   </div>
                   <div>
                     <div className="sidebar-caption mb-1.5 pl-1">FPS</div>
-                    <InputNumber size="small" value={s.fps} onChange={(v) => setS(prev => ({ ...prev, fps: clampPositive(v, 10) }))} className="border-[var(--sidebar-divider)] bg-[var(--input-bg)] hover:border-[var(--sidebar-selected-border)]" />
+                    <InputNumber size="small" value={s.fps} onChange={(v) => setS(prev => ({ ...prev, fps: clampPositive(v, DefaultFramesPerSecond) }))} className="border-[var(--sidebar-divider)] bg-[var(--input-bg)] hover:border-[var(--sidebar-selected-border)]" />
                   </div>
                 </div>
                 <div className="flex items-center justify-between border-t border-[var(--sidebar-divider)] pt-2">

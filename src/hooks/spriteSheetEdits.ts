@@ -1,8 +1,8 @@
-import type { Dispatch, MutableRefObject, SetStateAction } from 'react'
+import type { Dispatch, RefObject, SetStateAction } from 'react'
 import { clampSelectionToBounds, cloneSelection, traceSelectionPath, translateSelection } from '../utils/selectionUtils'
 import type { Point } from '../types/selectionTypes'
 import type { DrawableSource, ResizeAnchor, RgbColor, SpriteState } from '../types/spriteSheetTypes'
-import { cloneColor, colorsAreSimilar, computeResizeOffset, createCanvas, getSourceHeight, getSourceWidth, readColorAt } from '../utils/spriteSheetCanvasUtils'
+import { cloneColor, colorsAreSimilar, computeResizeOffset, createCanvas, findConnectedOpaqueBoundsInImageData, getSourceHeight, getSourceWidth, readColorAt } from '../utils/spriteSheetCanvasUtils'
 import { cloneDrawableSource, getReadableContext, type UndoSnapshot } from './spriteSheetCore'
 import { createSpriteSheetHistory } from './spriteSheetHistory'
 
@@ -10,8 +10,8 @@ interface SpriteSheetEditsDeps {
   state: SpriteState
   setState: Dispatch<SetStateAction<SpriteState>>
   setCanUndo: Dispatch<SetStateAction<boolean>>
-  undoStackRef: MutableRefObject<UndoSnapshot[]>
-  samplerCanvasRef: MutableRefObject<HTMLCanvasElement | null>
+  undoStackRef: RefObject<UndoSnapshot[]>
+  samplerCanvasRef: RefObject<HTMLCanvasElement | null>
   syncCanvasSizes: (source: DrawableSource | null) => void
   getDrawableSource: (state?: SpriteState) => DrawableSource | null
 }
@@ -150,6 +150,30 @@ export function createSpriteSheetEdits({
     }))
   }
 
+  const pickConnectedOpaqueRegion = (imgPt: Point) => {
+    const source = getDrawableSource()
+    if (!source || state.movingSel) return
+
+    const width = getSourceWidth(source)
+    const height = getSourceHeight(source)
+    const x = Math.min(width - 1, Math.max(0, Math.floor(imgPt.x)))
+    const y = Math.min(height - 1, Math.max(0, Math.floor(imgPt.y)))
+    const ctx = getReadableContext(source, samplerCanvasRef)
+    if (!ctx) return
+
+    const opaqueBounds = findConnectedOpaqueBoundsInImageData(ctx.getImageData(0, 0, width, height), { x, y })
+    if (!opaqueBounds) return
+
+    setState((prev) => ({
+      ...prev,
+      sel: { x: opaqueBounds.x, y: opaqueBounds.y, w: opaqueBounds.w, h: opaqueBounds.h },
+      selStart: null,
+      selType: 'rect',
+      lassoDrawing: false,
+      lassoPoints: [],
+    }))
+  }
+
   const resizeCanvas = (targetWidth: number, targetHeight: number, anchor: ResizeAnchor) => {
     const source = getDrawableSource()
     if (!source || state.movingSel) return
@@ -261,6 +285,7 @@ export function createSpriteSheetEdits({
     clearUndoStack,
     undo,
     resetEdits,
+    pickConnectedOpaqueRegion,
     resizeCanvas,
     setBackgroundSample,
     setBackgroundPickMode,

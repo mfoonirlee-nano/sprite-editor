@@ -1,7 +1,8 @@
 import type { Dispatch, RefObject, SetStateAction } from 'react'
-import { traceSelectionPath } from '../utils/selectionUtils'
+import { FitViewPaddingPx, FrameIndexFontMaxPx, FrameIndexFontMinPx, FrameIndexLabelInsetPx, GridLineDashPattern, MaxZoomScale, MaximumInitialFitZoom, MinZoomScale, PreviewFallbackSizePx, SelectionDashPattern, SelectionSecondaryDashOffset } from '../constants/spriteSheetConstants'
 import type { DrawableSource, SpriteState } from '../types/spriteSheetTypes'
-import { getSourceWidth, getSourceHeight } from '../utils/spriteSheetCanvasUtils'
+import { traceSelectionPath } from '../utils/selectionUtils'
+import { getSourceHeight, getSourceWidth } from '../utils/spriteSheetCanvasUtils'
 
 interface SpriteSheetRenderingDeps {
   state: SpriteState
@@ -29,9 +30,9 @@ export function createSpriteSheetRendering({
     const width = getSourceWidth(source)
     const height = getSourceHeight(source)
     const rect = wrap.getBoundingClientRect()
-    const scaleX = (rect.width - 60) / width
-    const scaleY = (rect.height - 60) / height
-    const zoom = Math.min(scaleX, scaleY, 4)
+    const scaleX = (rect.width - FitViewPaddingPx) / width
+    const scaleY = (rect.height - FitViewPaddingPx) / height
+    const zoom = Math.min(scaleX, scaleY, MaximumInitialFitZoom)
 
     setState((prev) => ({
       ...prev,
@@ -48,7 +49,7 @@ export function createSpriteSheetRendering({
     const rect = wrap.getBoundingClientRect()
     const mx = cx !== undefined ? cx - rect.left : rect.width / 2
     const my = cy !== undefined ? cy - rect.top : rect.height / 2
-    const nextZoom = Math.min(Math.max(zoom, 0.05), 16)
+    const nextZoom = Math.min(Math.max(zoom, MinZoomScale), MaxZoomScale)
     const panX = mx - (mx - state.panX) * (nextZoom / state.zoom)
     const panY = my - (my - state.panY) * (nextZoom / state.zoom)
     setState((prev) => ({ ...prev, zoom: nextZoom, panX, panY }))
@@ -76,8 +77,8 @@ export function createSpriteSheetRendering({
     const ctx = preview.getContext('2d')
     if (!ctx) return
     if (!source) {
-      preview.width = 128
-      preview.height = 128
+      preview.width = PreviewFallbackSizePx
+      preview.height = PreviewFallbackSizePx
       ctx.clearRect(0, 0, preview.width, preview.height)
       return
     }
@@ -105,7 +106,7 @@ export function createSpriteSheetRendering({
     const height = getSourceHeight(source)
     ctx.strokeStyle = 'rgba(124,106,247,0.5)'
     ctx.lineWidth = 1
-    ctx.setLineDash([3, 3])
+    ctx.setLineDash(GridLineDashPattern)
     for (let x = state.ox; x <= width; x += state.fw) {
       ctx.beginPath()
       ctx.moveTo(x + 0.5, state.oy)
@@ -120,14 +121,14 @@ export function createSpriteSheetRendering({
     }
     ctx.setLineDash([])
     ctx.fillStyle = 'rgba(124,106,247,0.7)'
-    ctx.font = `${Math.max(8, Math.min(12, state.fw / 6))}px monospace`
+    ctx.font = `${Math.max(FrameIndexFontMinPx, Math.min(FrameIndexFontMaxPx, state.fw / 6))}px monospace`
     ctx.textAlign = 'left'
     ctx.textBaseline = 'top'
     const columns = Math.max(1, Math.floor((width - state.ox) / state.fw))
     for (let i = 0; i < state.fcount; i++) {
       const col = i % columns
       const row = Math.floor(i / columns)
-      ctx.fillText(String(i), state.ox + col * state.fw + 3, state.oy + row * state.fh + 3)
+      ctx.fillText(String(i), state.ox + col * state.fw + FrameIndexLabelInsetPx, state.oy + row * state.fh + FrameIndexLabelInsetPx)
     }
   }
 
@@ -144,7 +145,7 @@ export function createSpriteSheetRendering({
         ctx.save()
         ctx.strokeStyle = 'rgba(124,106,247,0.9)'
         ctx.lineWidth = 1
-        ctx.setLineDash([4, 3])
+        ctx.setLineDash(SelectionDashPattern)
         ctx.lineDashOffset = -state.antsOffset
         ctx.beginPath()
         state.lassoPoints.forEach((point, index) => (index === 0 ? ctx.moveTo(point.x, point.y) : ctx.lineTo(point.x, point.y)))
@@ -160,12 +161,12 @@ export function createSpriteSheetRendering({
     ctx.fill()
     ctx.strokeStyle = '#7c6af7'
     ctx.lineWidth = 1
-    ctx.setLineDash([4, 3])
+    ctx.setLineDash(SelectionDashPattern)
     ctx.lineDashOffset = -state.antsOffset
     ctx.stroke()
     ctx.strokeStyle = 'rgba(255,255,255,0.4)'
-    ctx.setLineDash([4, 3])
-    ctx.lineDashOffset = -(state.antsOffset + 3.5)
+    ctx.setLineDash(SelectionDashPattern)
+    ctx.lineDashOffset = -(state.antsOffset + SelectionSecondaryDashOffset)
     ctx.stroke()
     ctx.restore()
   }

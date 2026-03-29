@@ -1,13 +1,14 @@
-import type { Dispatch, MutableRefObject, SetStateAction } from 'react'
+import type { Dispatch, RefObject, SetStateAction } from 'react'
+import { MaxUndoSnapshots } from '../constants/spriteSheetConstants'
+import type { SpriteState } from '../types/spriteSheetTypes'
 import { cloneSelection } from '../utils/selectionUtils'
 import { cloneColor } from '../utils/spriteSheetCanvasUtils'
-import type { SpriteState } from '../types/spriteSheetTypes'
 import { cloneDrawableSource, type UndoSnapshot } from './spriteSheetCore'
 
 interface SpriteSheetHistoryDeps {
   setState: Dispatch<SetStateAction<SpriteState>>
   setCanUndo: Dispatch<SetStateAction<boolean>>
-  undoStackRef: MutableRefObject<UndoSnapshot[]>
+  undoStackRef: RefObject<UndoSnapshot[]>
 }
 
 export function createSpriteSheetHistory({ setState, setCanUndo, undoStackRef }: SpriteSheetHistoryDeps) {
@@ -23,7 +24,7 @@ export function createSpriteSheetHistory({ setState, setCanUndo, undoStackRef }:
 
   const pushUndoSnapshot = (snapshotState: SpriteState) => {
     if (!snapshotState.img) return
-    undoStackRef.current = [...undoStackRef.current, createUndoSnapshot(snapshotState)].slice(-20)
+    undoStackRef.current = [...undoStackRef.current, createUndoSnapshot(snapshotState)].slice(-MaxUndoSnapshots)
     setCanUndo(undoStackRef.current.length > 0)
   }
 

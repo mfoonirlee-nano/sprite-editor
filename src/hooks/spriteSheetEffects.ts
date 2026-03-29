@@ -1,11 +1,12 @@
 import { useEffect } from 'react'
-import type { Dispatch, MutableRefObject, SetStateAction } from 'react'
+import type { Dispatch, RefObject, SetStateAction } from 'react'
+import { AnimationCatchUpFrameLimit, MillisecondsPerSecond, SelectionAntsCycleLength, SelectionAntsIntervalMs, SelectionAntsStep } from '../constants/spriteSheetConstants'
 import type { DrawableSource, SpriteState } from '../types/spriteSheetTypes'
 
 interface SpriteSheetEffectsDeps {
   state: SpriteState
   setState: Dispatch<SetStateAction<SpriteState>>
-  objectUrlRef: MutableRefObject<string | null>
+  objectUrlRef: RefObject<string | null>
   revokeObjectUrl: (url: string | null) => void
   getDrawableSource: () => DrawableSource | null
   syncCanvasSizes: (source: DrawableSource | null) => void
@@ -36,10 +37,10 @@ export function useSpriteSheetEffects({
       if (state.isPlaying) {
         const dt = ts - (state.lastTime || ts)
         setState((prev) => ({ ...prev, lastTime: ts, timer: prev.timer + dt }))
-        const interval = 1000 / state.fps
+        const interval = MillisecondsPerSecond / state.fps
         if (state.timer >= interval) {
           let timer = state.timer
-          if (timer > interval * 5) timer %= interval
+          if (timer > interval * AnimationCatchUpFrameLimit) timer %= interval
           let currentFrame = state.currentFrame
           while (timer >= interval) {
             currentFrame = (currentFrame + 1) % state.fcount
@@ -58,7 +59,10 @@ export function useSpriteSheetEffects({
   }, [state.img, state.isPlaying, state.fps, state.currentFrame, state.timer, state.lastTime, state.sel, state.lassoDrawing, state.lassoPoints, state.antsOffset, state.fw, state.fh, state.fcount, state.ox, state.oy, state.editCanvas, state.floatingCanvas, state.floatOffset.x, state.floatOffset.y, state.movingSel, drawMain, drawPreview, drawSelCanvas, setState])
 
   useEffect(() => {
-    const timer = setInterval(() => setState((prev) => ({ ...prev, antsOffset: (prev.antsOffset + 0.4) % 7 })), 30)
+    const timer = setInterval(
+      () => setState((prev) => ({ ...prev, antsOffset: (prev.antsOffset + SelectionAntsStep) % SelectionAntsCycleLength })),
+      SelectionAntsIntervalMs,
+    )
     return () => clearInterval(timer)
   }, [setState])
 

@@ -5,7 +5,9 @@
 ## Features
 
 - 点击、拖拽或粘贴导入图片
-- 平移、矩形选区、套索选区
+- 平移、矩形选区、套索选区、连通区域拾取
+- 右上角实时显示选区宽高与中心坐标
+- 画布底边与左边显示坐标轴，左下角为原点
 - 左侧工具栏内置 Undo 快捷操作
 - 选区移动并提交回画布
 - 单帧预览与动画播放
@@ -21,6 +23,7 @@
 - `V`：Pan Tool
 - `S`：Rect Select
 - `L`：Lasso Select
+- `F`：Frame Pick
 - `Cmd/Ctrl+Z`：Undo
 
 ## Getting Started
@@ -92,7 +95,14 @@ src/
 ├── App.tsx
 ├── main.tsx
 ├── hooks/
-│   └── useSpriteSheet.ts
+│   ├── useSpriteSheet.ts
+│   ├── spriteSheetCore.ts
+│   ├── spriteSheetEdits.ts
+│   ├── spriteSheetEffects.ts
+│   ├── spriteSheetHistory.ts
+│   └── spriteSheetRendering.ts
+├── constants/
+│   └── spriteSheetConstants.ts
 ├── types/
 │   ├── selectionTypes.ts
 │   └── spriteSheetTypes.ts
@@ -106,7 +116,8 @@ src/
 │       ├── SpriteRightPanel.tsx
 │       ├── SpriteViewport.tsx
 │       ├── importUtils.test.ts
-│       └── selectionUtils.test.ts
+│       ├── selectionUtils.test.ts
+│       └── spriteSheetCanvasUtils.test.ts
 └── styles/
 ```
 
@@ -115,10 +126,11 @@ src/
 - 当前主入口是 `index.html` + `src/main.tsx`
 - `sprite-editor.html` 如果仍存在，只应视为历史文件或参考文件，不是当前主工作流
 - 当前已提供最小自动化验证链路：`npm run typecheck`、`npm run lint`、`npm run test`、`npm run build`
-- 左侧面板当前负责顶部工具栏（Pan / Rect / Lasso / Undo）、导入、背景去除和画布尺寸；右侧面板负责帧设置、预览动画和导出
+- 左侧面板当前负责顶部工具栏（Pan / Rect / Lasso / Pick / Undo）、导入、背景去除和画布尺寸；右侧面板负责帧设置、预览动画和导出
+- `Frame Pick` 会在点击非透明像素后自动计算其连通区域包围盒，不需要先拖出临时矩形
 - 右侧面板支持收起/展开；收起只影响布局，不改变当前编辑状态
 - 导出区支持 `Selection`、`Current Frame` 和 `Full Image`
-- 纯逻辑回归测试当前优先覆盖 SpriteMode 的选择几何与图片导入逻辑，复杂交互仍需手工 smoke test
+- 纯逻辑回归测试当前优先覆盖 SpriteMode 的选择几何、图片导入和连通区域拾取逻辑，复杂交互仍需手工 smoke test
 
 ## License
 

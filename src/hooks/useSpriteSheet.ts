@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react'
+import { MaxUndoSnapshots } from '../constants/spriteSheetConstants'
 import { createInitialSpriteState, getDrawableSource as getSourceFromState, revokeObjectUrl, syncCanvasSizes as syncSizes, type SpriteCanvasRefs, type UndoSnapshot } from './spriteSheetCore'
 import { createSpriteSheetEdits } from './spriteSheetEdits'
 import { useSpriteSheetEffects } from './spriteSheetEffects'
@@ -64,7 +65,7 @@ export function useSpriteSheet() {
     img.onload = () => {
       syncCanvasSizes(img)
       if (snapshot) {
-        undoStackRef.current = [...undoStackRef.current, snapshot].slice(-20)
+        undoStackRef.current = [...undoStackRef.current, snapshot].slice(-MaxUndoSnapshots)
         setCanUndo(true)
       } else {
         edits.clearUndoStack()
@@ -131,6 +132,7 @@ export function useSpriteSheet() {
     applyBackgroundRemoval: edits.applyBackgroundRemoval,
     undo: edits.undo,
     resetEdits: edits.resetEdits,
+    pickConnectedOpaqueRegion: edits.pickConnectedOpaqueRegion,
     startMovingSelection: edits.startMovingSelection,
     updateMovingSelection: edits.updateMovingSelection,
     commitMovingSelection: edits.commitMovingSelection,
