@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { clampSelectionToBounds, cloneSelection, isPointInSelection, translateSelection } from '../../utils/selectionUtils'
+import { clampSelectionToBounds, cloneSelection, isPointInSelection, translateSelection } from './selectionUtils'
 
 describe('selectionUtils', () => {
   it('clones nested selection points', () => {

@@ -108,16 +108,16 @@ src/
 │   └── spriteSheetTypes.ts
 ├── utils/
 │   ├── selectionUtils.ts
+│   ├── selectionUtils.test.ts
 │   ├── spriteSheetCanvasUtils.ts
-│   └── spriteSheetImport.ts
+│   ├── spriteSheetCanvasUtils.test.ts
+│   ├── spriteSheetImport.ts
+│   └── spriteSheetImport.test.ts
 ├── modes/
 │   └── SpriteMode/
 │       ├── SpriteSidebar.tsx
 │       ├── SpriteRightPanel.tsx
-│       ├── SpriteViewport.tsx
-│       ├── importUtils.test.ts
-│       ├── selectionUtils.test.ts
-│       └── spriteSheetCanvasUtils.test.ts
+│       └── SpriteViewport.tsx
 └── styles/
 ```
 
@@ -130,7 +130,7 @@ src/
 - `Frame Pick` 会在点击非透明像素后自动计算其连通区域包围盒，不需要先拖出临时矩形
 - 右侧面板支持收起/展开；收起只影响布局，不改变当前编辑状态
 - 导出区支持 `Selection`、`Current Frame` 和 `Full Image`
-- 纯逻辑回归测试当前优先覆盖 SpriteMode 的选择几何、图片导入和连通区域拾取逻辑，复杂交互仍需手工 smoke test
+- 纯逻辑回归测试当前优先覆盖共享工具层的选择几何、图片导入和连通区域拾取逻辑，测试文件与被测模块同目录放置；复杂交互仍需手工 smoke test
 
 ## License
 

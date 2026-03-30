@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { findConnectedOpaqueBoundsInImageData } from '../../utils/spriteSheetCanvasUtils'
+import { findConnectedOpaqueBoundsInImageData } from './spriteSheetCanvasUtils'
 
 const createImageData = (width: number, height: number, opaquePoints: Array<[number, number]>) => {
   const data = new Uint8ClampedArray(width * height * 4)

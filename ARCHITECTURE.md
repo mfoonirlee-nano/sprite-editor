@@ -43,13 +43,15 @@ User Input
 │   │   └── spriteSheetTypes.ts         # shared sprite controller types and tool union
 │   ├── utils/
 │   │   ├── selectionUtils.ts           # shared selection geometry helpers
+│   │   ├── selectionUtils.test.ts      # colocated tests for selection geometry helpers
 │   │   ├── spriteSheetImport.ts        # image import helpers used by the sprite workflow
-│   │   └── spriteSheetCanvasUtils.ts   # low-level canvas helpers, color helpers, resize math, opaque-region analysis
+│   │   ├── spriteSheetImport.test.ts   # colocated tests for image import helpers
+│   │   ├── spriteSheetCanvasUtils.ts   # low-level canvas helpers, color helpers, resize math, opaque-region analysis
+│   │   └── spriteSheetCanvasUtils.test.ts # colocated tests for canvas helpers
 │   ├── modes/SpriteMode/
 │   │   ├── SpriteViewport.tsx          # viewport pointer interactions, selection HUD, coordinate axes overlays
 │   │   ├── SpriteSidebar.tsx           # left-side tools, import, background removal, canvas resize
-│   │   ├── SpriteRightPanel.tsx        # right-side frame settings, preview, and export controls
-│   │   └── *.test.ts                   # focused SpriteMode unit tests
+│   │   └── SpriteRightPanel.tsx        # right-side frame settings, preview, and export controls
 │   └── styles/                         # global styles
 ├── package.json
 └── README.md
