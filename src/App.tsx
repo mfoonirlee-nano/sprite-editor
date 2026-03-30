@@ -32,10 +32,10 @@ export default function App() {
         return
       }
 
-      if (key === 'v' || key === 's' || key === 'l') {
+      if (key === 'v' || key === 's' || key === 'l' || key === 'f') {
         spriteSheet.setS((prev) => ({
           ...prev,
-          tool: key === 'v' ? 'pan' : key === 's' ? 'select' : 'lasso',
+          tool: key === 'v' ? 'pan' : key === 's' ? 'select' : key === 'l' ? 'lasso' : 'framePick',
           selType: key === 'l' ? 'lasso' : 'rect',
         }))
       }

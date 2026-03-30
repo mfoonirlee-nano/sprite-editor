@@ -1,4 +1,5 @@
-import type { MutableRefObject, RefObject } from 'react'
+import type { RefObject } from 'react'
+import { DefaultBackgroundRemovalTolerance, DefaultFrameCount, DefaultFrameHeight, DefaultFrameWidth, DefaultFramesPerSecond } from '../constants/spriteSheetConstants'
 import type { Point } from '../types/selectionTypes'
 import type { DrawableSource, RgbColor, SpriteState } from '../types/spriteSheetTypes'
 import { createCanvas, getSourceHeight, getSourceWidth, readColorAt } from '../utils/spriteSheetCanvasUtils'
@@ -46,13 +47,13 @@ export function createInitialSpriteState(): SpriteState {
     floatingCanvas: null,
     floatOffset: { x: 0, y: 0 },
     antsOffset: 0,
-    fw: 64,
-    fh: 64,
-    fcount: 4,
-    fps: 10,
+    fw: DefaultFrameWidth,
+    fh: DefaultFrameHeight,
+    fcount: DefaultFrameCount,
+    fps: DefaultFramesPerSecond,
     ox: 0,
     oy: 0,
-    bgRemovalTolerance: 24,
+    bgRemovalTolerance: DefaultBackgroundRemovalTolerance,
     bgSampleColor: null,
     bgPickMode: false,
   }
@@ -87,7 +88,7 @@ export function syncCanvasSizes(refs: SpriteCanvasRefs, source: DrawableSource |
   })
 }
 
-export function getReadableContext(source: DrawableSource, samplerCanvasRef: MutableRefObject<HTMLCanvasElement | null>) {
+export function getReadableContext(source: DrawableSource, samplerCanvasRef: RefObject<HTMLCanvasElement | null>) {
   if (source instanceof HTMLCanvasElement) {
     return source.getContext('2d')
   }
@@ -112,7 +113,7 @@ export function getReadableContext(source: DrawableSource, samplerCanvasRef: Mut
 export function sampleColorAt(
   source: DrawableSource,
   point: Point,
-  samplerCanvasRef: MutableRefObject<HTMLCanvasElement | null>,
+  samplerCanvasRef: RefObject<HTMLCanvasElement | null>,
 ): RgbColor | null {
   const width = getSourceWidth(source)
   const height = getSourceHeight(source)

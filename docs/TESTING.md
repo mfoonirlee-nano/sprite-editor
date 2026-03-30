@@ -2,7 +2,7 @@
 
 > Define how this project ensures correctness and quality through verification.
 >
-> **Last updated**: 2026-03-28
+> **Last updated**: 2026-03-29
 
 ---
 
@@ -13,7 +13,7 @@ This project is a React + Vite + TypeScript frontend.
 Correctness is currently established through:
 - static verification (`npm run typecheck`)
 - lint verification (`npm run lint`)
-- automated unit tests for focused deterministic SpriteMode logic (`npm run test`)
+- automated unit tests for focused deterministic shared utility logic (`npm run test`)
 - production build verification (`npm run build`), including checking that generated HTML uses relative `./...` asset references
 - manual smoke testing of the affected editor flows
 
@@ -22,7 +22,7 @@ Correctness is currently established through:
 ## Testing Framework & Types
 
 - **Automated unit tests**: Vitest (`npm run test`)
-- **Current unit-test focus**: focused deterministic SpriteMode and shared types/utils-backed logic, especially shared geometry and import behavior that benefit from isolated verification
+- **Current unit-test focus**: focused deterministic shared types/utils-backed logic, especially shared geometry, import behavior, and opaque-region analysis that benefit from isolated verification
 - **Type checking**: TypeScript (`npm run typecheck`)
 - **Linting**: ESLint (`npm run lint`)
 - **Build verification**: Vite production build (`npm run build`)
@@ -32,10 +32,11 @@ Correctness is currently established through:
 
 ## Directory Structure
 
-The repository currently keeps lightweight test files next to the SpriteMode logic they cover.
+The repository currently keeps lightweight test files in the same directory as the modules they cover.
 Current automated tests live in:
-- `src/modes/SpriteMode/selectionUtils.test.ts`
-- `src/modes/SpriteMode/importUtils.test.ts`
+- `src/utils/selectionUtils.test.ts`
+- `src/utils/spriteSheetImport.test.ts`
+- `src/utils/spriteSheetCanvasUtils.test.ts`
 
 UI layout changes such as left/right panel composition and right-panel collapse/expand are currently validated manually rather than through component tests.
 
@@ -88,7 +89,7 @@ When editing sprite-editor behavior, manually validate the affected flows as nee
 - current-frame export, selection export, and full-image export
 - preview animation playback and frame switching
 - right panel collapse/expand behavior, including restoring the panel after collapse
-- left toolbar layout, including Pan / Rect / Lasso / Undo alignment and disabled undo behavior
+- left toolbar layout, including Pan / Rect / Lasso / Pick / Undo alignment and disabled undo behavior
 - left/right panel layout after moving frame settings, preview, and export to the right side
 
 ---
@@ -96,7 +97,7 @@ When editing sprite-editor behavior, manually validate the affected flows as nee
 ## Conventions & Rules
 
 When expanding automated coverage, continue to prioritize:
-- testing deterministic SpriteMode logic independently from pointer-event wiring
+- testing deterministic shared utility logic independently from pointer-event wiring
 - extracting or retaining isolated helpers only when that separation clearly improves verification value
 - keeping UI mocks minimal and focusing on user-visible behavior
 

@@ -51,8 +51,8 @@
 - **Run Dev Server**: `npm run dev`
 - **Build**: `npm run build` (emits relative `./` asset paths for static hosting)
 - **Preview Production Build**: `npm run preview`
-- **Type Check**: `npm exec tsc --noEmit`
-- **Tests**: No dedicated automated test script is configured yet
+- **Type Check**: `npm run typecheck`
+- **Tests**: `npm run test`
 
 ## Tech Stack
 
@@ -77,9 +77,10 @@
 
 ## Testing Rules
 
-- There is no established automated test suite yet.
-- For now, verification is primarily:
-  - `npm exec tsc --noEmit`
+- Focused automated tests exist for deterministic helpers, but coverage is still limited.
+- Verification is primarily:
+  - `npm run typecheck`
+  - `npm run test`
   - `npm run build`
   - targeted manual smoke tests for affected features
 - If a task introduces isolated pure logic that can be tested cheaply, prefer adding focused tests rather than broad UI mocks.

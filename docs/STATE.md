@@ -3,7 +3,7 @@
 > This document is a snapshot of the application's current real state. **Only keep the latest state, no history.**
 > Agent should read this file at the start of each new session to avoid making wrong assumptions.
 >
-> **Last updated**: 2026-03-27
+> **Last updated**: 2026-03-29
 
 ---
 
@@ -39,7 +39,7 @@
 | ---------- | ------ | --------- |
 | Large images are memory-heavy | Very large images may cause sluggish interaction or browser tab instability | `src/hooks/useSpriteSheet.ts` |
 | No persistence layer | Reloading the page loses in-memory editing state | Current app architecture |
-| No dedicated automated test suite | Regression coverage depends on build checks and manual smoke tests | `docs/TESTING.md` |
+| Automated coverage is still limited | Focused helper tests exist, but interaction-heavy canvas workflows still depend on manual smoke testing in addition to type/lint/test/build checks | `docs/TESTING.md` |
 
 ---
 

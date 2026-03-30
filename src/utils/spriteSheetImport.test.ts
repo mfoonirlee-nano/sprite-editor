@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { isImageFile, loadImageFile } from '../../utils/spriteSheetImport'
+import { isImageFile, loadImageFile } from './spriteSheetImport'
 
 describe('SpriteMode image import helpers', () => {
   it('accepts only image files', () => {

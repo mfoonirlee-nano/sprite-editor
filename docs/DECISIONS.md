@@ -3,11 +3,17 @@
 > Agent should read this file at the start of each new session to quickly understand historical decision context.
 > Each record corresponds to a completed exec plan or major repo-level decision, focusing on "why" and "key trade-offs".
 >
-> **Last updated**: 2026-03-28
+> **Last updated**: 2026-03-29
 
 ---
 
 ## Decision Records
+
+### E5 — Split the sprite controller by workflow and make frame pick click-based (2026-03-29)
+- **What changed**: `useSpriteSheet.ts` became a composition shell over `spriteSheetCore.ts`, `spriteSheetRendering.ts`, `spriteSheetEffects.ts`, `spriteSheetEdits.ts`, and `spriteSheetHistory.ts`; the viewport also gained selection HUD/axis overlays, and `framePick` now picks the connected non-transparent region on click instead of requiring a drag rectangle.
+- **Why**: The controller had become too large to maintain comfortably, and the original frame-pick interaction added friction because users had to create a temporary selection before getting the real picked bounds.
+- **Key trade-offs**: The controller logic now spans a few adjacent files, but the public API stays stable and the workflows are easier to reason about and test in isolation. The click-based pick only returns a rectangular bounding box, not a polygonal mask, because that matches the existing selection model.
+- **Not done / Remaining**: Documentation and TODO tracking were synced, but broader cleanup work like magic-number extraction still remains.
 
 ### E4 — Normalize shared code into `src/types` and `src/utils` (2026-03-28)
 - **What changed**: Shared sprite/domain types were moved into `src/types/`, shared helpers were moved into `src/utils/`, and `src/hooks/` now keeps only actual hook files.

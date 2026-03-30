@@ -32,3 +32,46 @@ export const readColorAt = (ctx: CanvasRenderingContext2D, width: number, height
   if (a === 0) return null
   return { r, g, b }
 }
+
+export const findConnectedOpaqueBoundsInImageData = (imageData: ImageData, point: Point) => {
+  const { width, height, data } = imageData
+  const startX = Math.min(width - 1, Math.max(0, Math.floor(point.x)))
+  const startY = Math.min(height - 1, Math.max(0, Math.floor(point.y)))
+  const startIndex = (startY * width + startX) * 4 + 3
+  if (data[startIndex] === 0) return null
+
+  const visited = new Uint8Array(width * height)
+  const queue: Array<[number, number]> = [[startX, startY]]
+  visited[startY * width + startX] = 1
+
+  let minX = startX
+  let minY = startY
+  let maxX = startX
+  let maxY = startY
+
+  for (let i = 0; i < queue.length; i += 1) {
+    const [x, y] = queue[i]
+    if (x < minX) minX = x
+    if (y < minY) minY = y
+    if (x > maxX) maxX = x
+    if (y > maxY) maxY = y
+
+    const neighbors: Array<[number, number]> = [
+      [x - 1, y],
+      [x + 1, y],
+      [x, y - 1],
+      [x, y + 1],
+    ]
+
+    neighbors.forEach(([nextX, nextY]) => {
+      if (nextX < 0 || nextX >= width || nextY < 0 || nextY >= height) return
+      const offset = nextY * width + nextX
+      if (visited[offset]) return
+      visited[offset] = 1
+      if (data[offset * 4 + 3] === 0) return
+      queue.push([nextX, nextY])
+    })
+  }
+
+  return { x: minX, y: minY, w: maxX - minX + 1, h: maxY - minY + 1 }
+}
