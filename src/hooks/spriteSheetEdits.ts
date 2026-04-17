@@ -2,7 +2,7 @@ import type { Dispatch, RefObject, SetStateAction } from 'react'
 import { clampSelectionToBounds, cloneSelection, traceSelectionPath, translateSelection } from '../utils/selectionUtils'
 import type { Point } from '../types/selectionTypes'
 import type { DrawableSource, ResizeAnchor, RgbColor, SpriteState } from '../types/spriteSheetTypes'
-import { cloneColor, colorsAreSimilar, computeResizeOffset, createCanvas, findConnectedOpaqueBoundsInImageData, getSourceHeight, getSourceWidth, readColorAt } from '../utils/spriteSheetCanvasUtils'
+import { cloneColor, colorsAreSimilar, computeResizeOffset, createCanvas, findConnectedColorPixelsInImageData, findConnectedOpaqueBoundsInImageData, getSourceHeight, getSourceWidth, readColorAt } from '../utils/spriteSheetCanvasUtils'
 import { cloneDrawableSource, getReadableContext, type UndoSnapshot } from './spriteSheetCore'
 import { createSpriteSheetHistory } from './spriteSheetHistory'
 
@@ -174,6 +174,70 @@ export function createSpriteSheetEdits({
     }))
   }
 
+  const pickConnectedColorRegion = (imgPt: Point) => {
+    const source = getDrawableSource()
+    if (!source || state.movingSel) return
+
+    const width = getSourceWidth(source)
+    const height = getSourceHeight(source)
+    const ctx = getReadableContext(source, samplerCanvasRef)
+    if (!ctx) return
+
+    const pixels = findConnectedColorPixelsInImageData(ctx.getImageData(0, 0, width, height), imgPt, state.bgRemovalTolerance)
+    if (!pixels || pixels.length === 0) return
+
+    const xs = pixels.map((p) => p.x)
+    const ys = pixels.map((p) => p.y)
+    const minX = Math.min(...xs)
+    const minY = Math.min(...ys)
+    const maxX = Math.max(...xs)
+    const maxY = Math.max(...ys)
+
+    setState((prev) => ({
+      ...prev,
+      sel: { x: minX, y: minY, w: maxX - minX + 1, h: maxY - minY + 1, points: pixels },
+      selStart: null,
+      selType: 'lasso',
+      lassoDrawing: false,
+      lassoPoints: [],
+    }))
+  }
+
+  const deleteSelection = () => {
+    const sel = state.sel
+    const source = getDrawableSource()
+    if (!sel || !source || state.movingSel) return
+
+    pushUndoSnapshot(state)
+    const canvas = cloneDrawableSource(source)
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+
+    if (sel.points?.length) {
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
+      sel.points.forEach(({ x, y }) => {
+        const idx = (Math.round(y) * canvas.width + Math.round(x)) * 4
+        imageData.data[idx + 3] = 0
+      })
+      ctx.putImageData(imageData, 0, 0)
+    } else {
+      ctx.clearRect(sel.x, sel.y, sel.w, sel.h)
+    }
+
+    setState((prev) => ({
+      ...prev,
+      editCanvas: canvas,
+      sel: null,
+      selStart: null,
+      lassoDrawing: false,
+      lassoPoints: [],
+      floatingCanvas: null,
+      movingSel: false,
+      moveSelStart: null,
+      floatOffset: { x: 0, y: 0 },
+    }))
+  }
+
   const resizeCanvas = (targetWidth: number, targetHeight: number, anchor: ResizeAnchor) => {
     const source = getDrawableSource()
     if (!source || state.movingSel) return
@@ -286,6 +350,8 @@ export function createSpriteSheetEdits({
     undo,
     resetEdits,
     pickConnectedOpaqueRegion,
+    pickConnectedColorRegion,
+    deleteSelection,
     resizeCanvas,
     setBackgroundSample,
     setBackgroundPickMode,

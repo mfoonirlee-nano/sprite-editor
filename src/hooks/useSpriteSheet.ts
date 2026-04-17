@@ -133,6 +133,8 @@ export function useSpriteSheet() {
     undo: edits.undo,
     resetEdits: edits.resetEdits,
     pickConnectedOpaqueRegion: edits.pickConnectedOpaqueRegion,
+    pickConnectedColorRegion: edits.pickConnectedColorRegion,
+    deleteSelection: edits.deleteSelection,
     startMovingSelection: edits.startMovingSelection,
     updateMovingSelection: edits.updateMovingSelection,
     commitMovingSelection: edits.commitMovingSelection,

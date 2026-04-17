@@ -28,6 +28,8 @@ export default function SpriteViewport({ spriteSheet }: SpriteViewportProps) {
     setBackgroundPickMode,
     getDrawableSource,
     pickConnectedOpaqueRegion,
+    pickConnectedColorRegion,
+    deleteSelection,
   } = spriteSheet
   const [hoveringSelection, setHoveringSelection] = React.useState(false)
   const [viewportSize, setViewportSize] = React.useState({ width: 0, height: 0 })
@@ -178,6 +180,8 @@ export default function SpriteViewport({ spriteSheet }: SpriteViewportProps) {
           setS((prev) => ({ ...prev, lassoDrawing: true, lassoPoints: [pt], sel: null, selType: 'lasso' }))
         } else if (s.tool === 'framePick' && s.img) {
           pickConnectedOpaqueRegion(pt)
+        } else if (s.tool === 'colorPick' && s.img) {
+          pickConnectedColorRegion(pt)
         } else if (s.tool === 'select' && s.img) {
           setS((prev) => ({ ...prev, selStart: pt, sel: { x: pt.x, y: pt.y, w: 0, h: 0 }, selType: 'rect' }))
         }
@@ -225,7 +229,7 @@ export default function SpriteViewport({ spriteSheet }: SpriteViewportProps) {
         }
         finishInteraction()
       }}
-      style={{ cursor: s.bgPickMode ? 'copy' : s.movingSel ? 'grabbing' : hoveringSelection ? 'grab' : s.tool === 'pan' ? (s.dragging ? 'grabbing' : 'grab') : s.tool === 'select' || s.tool === 'lasso' || s.tool === 'framePick' ? 'crosshair' : 'default' }}
+      style={{ cursor: s.bgPickMode ? 'copy' : s.movingSel ? 'grabbing' : hoveringSelection ? 'grab' : s.tool === 'pan' ? (s.dragging ? 'grabbing' : 'grab') : s.tool === 'select' || s.tool === 'lasso' || s.tool === 'framePick' || s.tool === 'colorPick' ? 'crosshair' : 'default' }}
     >
       <canvas ref={mainRef} className="absolute origin-top-left shadow-[0_0_20px_rgba(0,0,0,0.5)]" style={{ imageRendering: 'pixelated' }} />
       <canvas ref={gridRef} className="absolute origin-top-left pointer-events-none" style={{ imageRendering: 'pixelated' }} />

@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { Button, InputNumber, Tooltip } from '@arco-design/web-react'
-import { IconDragArrow, IconDragDotVertical, IconFullscreen, IconPenFill, IconRefresh, IconSelectAll, IconUndo, IconUpload } from '@arco-design/web-react/icon'
+import { IconDragArrow, IconDragDotVertical, IconFullscreen, IconPenFill, IconRefresh, IconSelectAll, IconUndo, IconUpload, IconNav } from '@arco-design/web-react/icon'
 import { DefaultResizeAnchor, MaxColorChannelValue, MinimumPositiveValue, ResizeAnchorColumns, ResizeAnchorRows } from '../../constants/spriteSheetConstants'
 import type { SpriteSheetController } from '../../hooks/useSpriteSheet'
 import type { ResizeAnchor } from '../../types/spriteSheetTypes'
@@ -74,7 +74,7 @@ export default function SpriteSidebar({ spriteSheet }: SpriteSidebarProps) {
   return (
     <div className="flex flex-col gap-4 overflow-y-auto h-full p-4 pr-3 text-[13px] custom-scroll">
       <div className="flex w-full rounded-2xl border border-[var(--sidebar-divider)] bg-[var(--input-bg)] p-1">
-        <Tooltip content="Pan Tool (V)">
+        <Tooltip content="Pan Tool (Q)">
           <button
             className={`sidebar-interactive flex-1 flex items-center justify-center gap-1.5 rounded-xl py-1.5 text-xs duration-200 ${
               s.tool === 'pan' ? 'border border-[var(--sidebar-selected-border)] bg-[var(--sidebar-selected)] text-[var(--text)]' : 'border border-transparent text-[var(--muted)] hover:bg-[var(--sidebar-hover)] hover:text-[var(--text)]'
@@ -84,7 +84,7 @@ export default function SpriteSidebar({ spriteSheet }: SpriteSidebarProps) {
             <IconDragArrow /> Pan
           </button>
         </Tooltip>
-        <Tooltip content="Rect Select (S)">
+        <Tooltip content="Rect Select (W)">
           <button
             className={`sidebar-interactive flex-1 flex items-center justify-center gap-1.5 rounded-xl py-1.5 text-xs duration-200 ${
               s.tool === 'select' ? 'border border-[var(--sidebar-selected-border)] bg-[var(--sidebar-selected)] text-[var(--text)]' : 'text-[var(--muted)] hover:bg-[var(--sidebar-hover)] hover:text-[var(--text)]'
@@ -94,7 +94,7 @@ export default function SpriteSidebar({ spriteSheet }: SpriteSidebarProps) {
             <IconFullscreen /> Rect
           </button>
         </Tooltip>
-        <Tooltip content="Lasso Select (L)">
+        <Tooltip content="Lasso Select (E)">
           <button
             className={`sidebar-interactive flex-1 flex items-center justify-center gap-1.5 rounded-xl py-1.5 text-xs duration-200 ${
               s.tool === 'lasso' ? 'border border-[var(--sidebar-selected-border)] bg-[var(--sidebar-selected)] text-[var(--text)]' : 'text-[var(--muted)] hover:bg-[var(--sidebar-hover)] hover:text-[var(--text)]'
@@ -104,7 +104,7 @@ export default function SpriteSidebar({ spriteSheet }: SpriteSidebarProps) {
             <IconPenFill /> Lasso
           </button>
         </Tooltip>
-        <Tooltip content="Frame Pick (F)">
+        <Tooltip content="Frame Pick (R)">
           <button
             className={`sidebar-interactive flex-1 flex items-center justify-center gap-1.5 rounded-xl py-1.5 text-xs duration-200 ${
               s.tool === 'framePick' ? 'border border-[var(--sidebar-selected-border)] bg-[var(--sidebar-selected)] text-[var(--text)]' : 'text-[var(--muted)] hover:bg-[var(--sidebar-hover)] hover:text-[var(--text)]'
@@ -112,6 +112,16 @@ export default function SpriteSidebar({ spriteSheet }: SpriteSidebarProps) {
             onClick={() => setS(prev => ({ ...prev, tool: 'framePick', selType: 'rect' }))}
           >
             <IconSelectAll /> Pick
+          </button>
+        </Tooltip>
+        <Tooltip content="Color Select (T)">
+          <button
+            className={`sidebar-interactive flex-1 flex items-center justify-center gap-1.5 rounded-xl py-1.5 text-xs duration-200 ${
+              s.tool === 'colorPick' ? 'border border-[var(--sidebar-selected-border)] bg-[var(--sidebar-selected)] text-[var(--text)]' : 'text-[var(--muted)] hover:bg-[var(--sidebar-hover)] hover:text-[var(--text)]'
+            }`}
+            onClick={() => setS(prev => ({ ...prev, tool: 'colorPick', selType: 'lasso' }))}
+          >
+            <IconNav /> Color
           </button>
         </Tooltip>
         <div className="mx-1 my-1 w-px shrink-0 bg-[var(--sidebar-divider)]" />

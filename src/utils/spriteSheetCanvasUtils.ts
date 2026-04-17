@@ -33,6 +33,54 @@ export const readColorAt = (ctx: CanvasRenderingContext2D, width: number, height
   return { r, g, b }
 }
 
+export const findConnectedColorPixelsInImageData = (imageData: ImageData, point: Point, tolerance: number): Point[] | null => {
+  const { width, height, data } = imageData
+  const startX = Math.min(width - 1, Math.max(0, Math.floor(point.x)))
+  const startY = Math.min(height - 1, Math.max(0, Math.floor(point.y)))
+  const startOffset = (startY * width + startX) * 4
+  const startA = data[startOffset + 3]
+  if (startA === 0) return null
+
+  const startR = data[startOffset]
+  const startG = data[startOffset + 1]
+  const startB = data[startOffset + 2]
+
+  const visited = new Uint8Array(width * height)
+  const queue: Array<[number, number]> = [[startX, startY]]
+  visited[startY * width + startX] = 1
+  const pixels: Point[] = []
+
+  for (let i = 0; i < queue.length; i += 1) {
+    const [x, y] = queue[i]
+    pixels.push({ x, y })
+
+    const neighbors: Array<[number, number]> = [
+      [x - 1, y],
+      [x + 1, y],
+      [x, y - 1],
+      [x, y + 1],
+    ]
+
+    neighbors.forEach(([nextX, nextY]) => {
+      if (nextX < 0 || nextX >= width || nextY < 0 || nextY >= height) return
+      const offset = nextY * width + nextX
+      if (visited[offset]) return
+      visited[offset] = 1
+      const idx = offset * 4
+      if (data[idx + 3] === 0) return
+      if (
+        Math.abs(data[idx] - startR) <= tolerance &&
+        Math.abs(data[idx + 1] - startG) <= tolerance &&
+        Math.abs(data[idx + 2] - startB) <= tolerance
+      ) {
+        queue.push([nextX, nextY])
+      }
+    })
+  }
+
+  return pixels.length > 0 ? pixels : null
+}
+
 export const findConnectedOpaqueBoundsInImageData = (imageData: ImageData, point: Point) => {
   const { width, height, data } = imageData
   const startX = Math.min(width - 1, Math.max(0, Math.floor(point.x)))

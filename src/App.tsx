@@ -32,12 +32,18 @@ export default function App() {
         return
       }
 
-      if (key === 'v' || key === 's' || key === 'l' || key === 'f') {
+      if (key === 'q' || key === 'w' || key === 'e' || key === 'r' || key === 't') {
         spriteSheet.setS((prev) => ({
           ...prev,
-          tool: key === 'v' ? 'pan' : key === 's' ? 'select' : key === 'l' ? 'lasso' : 'framePick',
-          selType: key === 'l' ? 'lasso' : 'rect',
+          tool: key === 'q' ? 'pan' : key === 'w' ? 'select' : key === 'e' ? 'lasso' : key === 'r' ? 'framePick' : 'colorPick',
+          selType: key === 'e' || key === 't' ? 'lasso' : 'rect',
         }))
+        return
+      }
+
+      if ((key === 'delete' || key === 'backspace') && spriteSheet.s.sel && !spriteSheet.s.movingSel) {
+        e.preventDefault()
+        spriteSheet.deleteSelection()
       }
     }
 

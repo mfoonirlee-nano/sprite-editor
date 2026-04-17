@@ -1,6 +1,6 @@
 import type { Point, Selection } from './selectionTypes'
 
-export type Tool = 'pan' | 'select' | 'lasso' | 'framePick'
+export type Tool = 'pan' | 'select' | 'lasso' | 'framePick' | 'colorPick'
 
 export type DrawableSource = HTMLImageElement | HTMLCanvasElement
 export type RgbColor = { r: number; g: number; b: number }
