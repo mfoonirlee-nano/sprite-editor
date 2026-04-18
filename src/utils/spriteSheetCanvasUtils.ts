@@ -81,6 +81,38 @@ export const findConnectedColorPixelsInImageData = (imageData: ImageData, point:
   return pixels.length > 0 ? pixels : null
 }
 
+// Removes edge jaggies by eroding spike pixels — opaque pixels with ≤1 opaque
+// 4-directional neighbor are sticking out alone and get removed. Runs `iterations`
+// passes so each pass can expose new spikes uncovered by the previous one.
+// `selMask` restricts which pixels are candidates for removal (undefined = all).
+export const cleanEdgeJaggies = (imageData: ImageData, iterations: number, selMask?: Set<number>): ImageData => {
+  const { width, height } = imageData
+  let data = new Uint8ClampedArray(imageData.data)
+
+  for (let iter = 0; iter < iterations; iter++) {
+    const next = new Uint8ClampedArray(data)
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) {
+        const idx = y * width + x
+        const i = idx * 4
+        if (data[i + 3] === 0) continue
+        if (selMask && !selMask.has(idx)) continue
+
+        let opaqueNeighbors = 0
+        if (x > 0 && data[i - 4 + 3] > 0) opaqueNeighbors++
+        if (x < width - 1 && data[i + 4 + 3] > 0) opaqueNeighbors++
+        if (y > 0 && data[i - width * 4 + 3] > 0) opaqueNeighbors++
+        if (y < height - 1 && data[i + width * 4 + 3] > 0) opaqueNeighbors++
+
+        if (opaqueNeighbors <= 1) next[i + 3] = 0
+      }
+    }
+    data = next
+  }
+
+  return new ImageData(data, width, height)
+}
+
 export const findConnectedOpaqueBoundsInImageData = (imageData: ImageData, point: Point) => {
   const { width, height, data } = imageData
   const startX = Math.min(width - 1, Math.max(0, Math.floor(point.x)))

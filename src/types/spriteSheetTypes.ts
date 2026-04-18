@@ -43,7 +43,7 @@ export interface SpriteState {
   fps: number
   ox: number
   oy: number
-  bgRemovalTolerance: number
   bgSampleColor: RgbColor | null
   bgPickMode: boolean
+  colorPickTolerance: number
 }

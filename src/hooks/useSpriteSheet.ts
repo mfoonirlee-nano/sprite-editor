@@ -76,29 +76,38 @@ export function useSpriteSheet() {
       }
       objectUrlRef.current = nextObjectUrl
 
-      setS((prev) => ({
-        ...prev,
-        img,
-        imgSrc: src,
-        currentFrame: 0,
-        isPlaying: false,
-        timer: 0,
-        lastTime: 0,
-        selType: 'rect',
-        sel: null,
-        lassoDrawing: false,
-        lassoPoints: [],
-        dragging: false,
-        panStart: null,
-        selStart: null,
-        movingSel: false,
-        moveSelStart: null,
-        editCanvas: null,
-        floatingCanvas: null,
-        floatOffset: { x: 0, y: 0 },
-        bgSampleColor: null,
-        bgPickMode: false,
-      }))
+      setS((prev) => {
+        const imgWidth = img.naturalWidth
+        const imgHeight = img.naturalHeight
+        const fw = prev.fw
+        const fh = imgHeight
+        const fcount = Math.max(1, Math.floor(imgWidth / fw))
+        return {
+          ...prev,
+          img,
+          imgSrc: src,
+          fh,
+          fcount,
+          currentFrame: 0,
+          isPlaying: false,
+          timer: 0,
+          lastTime: 0,
+          selType: 'rect',
+          sel: null,
+          lassoDrawing: false,
+          lassoPoints: [],
+          dragging: false,
+          panStart: null,
+          selStart: null,
+          movingSel: false,
+          moveSelStart: null,
+          editCanvas: null,
+          floatingCanvas: null,
+          floatOffset: { x: 0, y: 0 },
+          bgSampleColor: null,
+          bgPickMode: false,
+        }
+      })
 
       rendering.fitView(img)
     }
@@ -134,6 +143,7 @@ export function useSpriteSheet() {
     resetEdits: edits.resetEdits,
     pickConnectedOpaqueRegion: edits.pickConnectedOpaqueRegion,
     pickConnectedColorRegion: edits.pickConnectedColorRegion,
+    applySharpening: edits.applySharpening,
     deleteSelection: edits.deleteSelection,
     startMovingSelection: edits.startMovingSelection,
     updateMovingSelection: edits.updateMovingSelection,

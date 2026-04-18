@@ -8,6 +8,7 @@ export const DefaultFrameHeight = 64
 export const DefaultFrameCount = 4
 export const DefaultFramesPerSecond = 10
 export const DefaultBackgroundRemovalTolerance = 24
+export const DefaultColorPickTolerance = 24
 
 export const MaxUndoSnapshots = 20
 

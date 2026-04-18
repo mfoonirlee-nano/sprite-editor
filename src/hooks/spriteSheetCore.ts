@@ -1,5 +1,5 @@
 import type { RefObject } from 'react'
-import { DefaultBackgroundRemovalTolerance, DefaultFrameCount, DefaultFrameHeight, DefaultFrameWidth, DefaultFramesPerSecond } from '../constants/spriteSheetConstants'
+import { DefaultColorPickTolerance, DefaultFrameCount, DefaultFrameHeight, DefaultFrameWidth, DefaultFramesPerSecond } from '../constants/spriteSheetConstants'
 import type { Point } from '../types/selectionTypes'
 import type { DrawableSource, RgbColor, SpriteState } from '../types/spriteSheetTypes'
 import { createCanvas, getSourceHeight, getSourceWidth, readColorAt } from '../utils/spriteSheetCanvasUtils'
@@ -53,9 +53,9 @@ export function createInitialSpriteState(): SpriteState {
     fps: DefaultFramesPerSecond,
     ox: 0,
     oy: 0,
-    bgRemovalTolerance: DefaultBackgroundRemovalTolerance,
     bgSampleColor: null,
     bgPickMode: false,
+    colorPickTolerance: DefaultColorPickTolerance,
   }
 }
 

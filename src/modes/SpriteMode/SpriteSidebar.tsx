@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { Button, InputNumber, Tooltip } from '@arco-design/web-react'
-import { IconDragArrow, IconDragDotVertical, IconFullscreen, IconPenFill, IconRefresh, IconSelectAll, IconUndo, IconUpload, IconNav } from '@arco-design/web-react/icon'
+import { IconDragArrow, IconDragDotVertical, IconFullscreen, IconNav, IconPenFill, IconRefresh, IconSelectAll, IconThunderbolt, IconUndo, IconUpload } from '@arco-design/web-react/icon'
 import { DefaultResizeAnchor, MaxColorChannelValue, MinimumPositiveValue, ResizeAnchorColumns, ResizeAnchorRows } from '../../constants/spriteSheetConstants'
 import type { SpriteSheetController } from '../../hooks/useSpriteSheet'
 import type { ResizeAnchor } from '../../types/spriteSheetTypes'
@@ -22,6 +22,8 @@ export default function SpriteSidebar({ spriteSheet }: SpriteSidebarProps) {
     setBackgroundPickMode,
     autoRemoveBackground,
     applyBackgroundRemoval,
+    applySharpening,
+    deleteSelection,
     undo,
     resetEdits,
     resizeCanvas,
@@ -67,81 +69,100 @@ export default function SpriteSidebar({ spriteSheet }: SpriteSidebarProps) {
     setResizeHeight(height)
   }, [s.editCanvas, s.img])
 
+  const [sharpenStrength, setSharpenStrength] = useState(1)
   const hasBgSample = !!s.bgSampleColor
   const undoDisabled = !canUndo || s.movingSel
   const resizeDisabled = !s.img || s.movingSel
 
   return (
     <div className="flex flex-col gap-4 overflow-y-auto h-full p-4 pr-3 text-[13px] custom-scroll">
-      <div className="flex w-full rounded-2xl border border-[var(--sidebar-divider)] bg-[var(--input-bg)] p-1">
-        <Tooltip content="Pan Tool (Q)">
-          <button
-            className={`sidebar-interactive flex-1 flex items-center justify-center gap-1.5 rounded-xl py-1.5 text-xs duration-200 ${
-              s.tool === 'pan' ? 'border border-[var(--sidebar-selected-border)] bg-[var(--sidebar-selected)] text-[var(--text)]' : 'border border-transparent text-[var(--muted)] hover:bg-[var(--sidebar-hover)] hover:text-[var(--text)]'
-            }`}
-            onClick={() => setS(prev => ({ ...prev, tool: 'pan', selType: 'rect' }))}
-          >
-            <IconDragArrow /> Pan
-          </button>
-        </Tooltip>
-        <Tooltip content="Rect Select (W)">
-          <button
-            className={`sidebar-interactive flex-1 flex items-center justify-center gap-1.5 rounded-xl py-1.5 text-xs duration-200 ${
-              s.tool === 'select' ? 'border border-[var(--sidebar-selected-border)] bg-[var(--sidebar-selected)] text-[var(--text)]' : 'text-[var(--muted)] hover:bg-[var(--sidebar-hover)] hover:text-[var(--text)]'
-            }`}
-            onClick={() => setS(prev => ({ ...prev, tool: 'select', selType: 'rect' }))}
-          >
-            <IconFullscreen /> Rect
-          </button>
-        </Tooltip>
-        <Tooltip content="Lasso Select (E)">
-          <button
-            className={`sidebar-interactive flex-1 flex items-center justify-center gap-1.5 rounded-xl py-1.5 text-xs duration-200 ${
-              s.tool === 'lasso' ? 'border border-[var(--sidebar-selected-border)] bg-[var(--sidebar-selected)] text-[var(--text)]' : 'text-[var(--muted)] hover:bg-[var(--sidebar-hover)] hover:text-[var(--text)]'
-            }`}
-            onClick={() => setS(prev => ({ ...prev, tool: 'lasso', selType: 'lasso' }))}
-          >
-            <IconPenFill /> Lasso
-          </button>
-        </Tooltip>
-        <Tooltip content="Frame Pick (R)">
-          <button
-            className={`sidebar-interactive flex-1 flex items-center justify-center gap-1.5 rounded-xl py-1.5 text-xs duration-200 ${
-              s.tool === 'framePick' ? 'border border-[var(--sidebar-selected-border)] bg-[var(--sidebar-selected)] text-[var(--text)]' : 'text-[var(--muted)] hover:bg-[var(--sidebar-hover)] hover:text-[var(--text)]'
-            }`}
-            onClick={() => setS(prev => ({ ...prev, tool: 'framePick', selType: 'rect' }))}
-          >
-            <IconSelectAll /> Pick
-          </button>
-        </Tooltip>
-        <Tooltip content="Color Select (T)">
-          <button
-            className={`sidebar-interactive flex-1 flex items-center justify-center gap-1.5 rounded-xl py-1.5 text-xs duration-200 ${
-              s.tool === 'colorPick' ? 'border border-[var(--sidebar-selected-border)] bg-[var(--sidebar-selected)] text-[var(--text)]' : 'text-[var(--muted)] hover:bg-[var(--sidebar-hover)] hover:text-[var(--text)]'
-            }`}
-            onClick={() => setS(prev => ({ ...prev, tool: 'colorPick', selType: 'lasso' }))}
-          >
-            <IconNav /> Color
-          </button>
-        </Tooltip>
-        <div className="mx-1 my-1 w-px shrink-0 bg-[var(--sidebar-divider)]" />
+      <div className="flex w-full rounded-2xl border border-[var(--sidebar-divider)] bg-[var(--input-bg)] p-1 gap-0.5">
+        {(
+          [
+            { tool: 'pan',       label: 'Pan',   icon: <IconDragArrow />, tooltip: 'Pan Tool (Q)',      onClick: () => setS(prev => ({ ...prev, tool: 'pan',       selType: 'rect'  })) },
+            { tool: 'select',    label: 'Rect',  icon: <IconFullscreen />, tooltip: 'Rect Select (W)',  onClick: () => setS(prev => ({ ...prev, tool: 'select',    selType: 'rect'  })) },
+            { tool: 'lasso',     label: 'Lasso', icon: <IconPenFill />,   tooltip: 'Lasso Select (E)', onClick: () => setS(prev => ({ ...prev, tool: 'lasso',     selType: 'lasso' })) },
+            { tool: 'framePick', label: 'Pick',  icon: <IconSelectAll />, tooltip: 'Frame Pick (R)',    onClick: () => setS(prev => ({ ...prev, tool: 'framePick', selType: 'rect'  })) },
+            { tool: 'colorPick', label: 'Color', icon: <IconNav />,       tooltip: 'Color Select (T)', onClick: () => setS(prev => ({ ...prev, tool: 'colorPick', selType: 'lasso' })) },
+          ] as const
+        ).map(({ tool, label, icon, tooltip, onClick }) => {
+          const active = s.tool === tool
+          return (
+            <Tooltip key={tool} content={tooltip}>
+              <button
+                className={`sidebar-interactive relative flex-1 flex flex-col items-center justify-center gap-1 rounded-xl py-2 text-[10px] font-medium leading-none duration-200 ${
+                  active
+                    ? 'bg-[var(--sidebar-selected)] text-[var(--accent)]'
+                    : 'text-[var(--muted)] hover:bg-[var(--sidebar-hover)] hover:text-[var(--text)]'
+                }`}
+                onClick={onClick}
+              >
+                <span className="text-sm leading-none">{icon}</span>
+                {label}
+                {active && <span className="absolute bottom-1 left-1/2 -translate-x-1/2 h-0.5 w-3 rounded-full bg-[var(--accent)] opacity-70" />}
+              </button>
+            </Tooltip>
+          )
+        })}
+        <div className="mx-0.5 my-1 w-px shrink-0 bg-[var(--sidebar-divider)]" />
         <Tooltip content="Undo (Cmd/Ctrl+Z)">
           <button
             type="button"
             aria-label="Undo"
             onClick={(e) => {
-              if (undoDisabled) {
-                e.preventDefault()
-                return
-              }
+              if (undoDisabled) { e.preventDefault(); return }
               undo()
             }}
-            className={`sidebar-interactive flex w-9 shrink-0 self-stretch items-center justify-center rounded-xl text-sm leading-none ${undoDisabled ? 'text-[var(--muted)] opacity-50 cursor-not-allowed' : 'text-[var(--text)] hover:bg-[var(--sidebar-hover)]'}`}
+            className={`sidebar-interactive flex w-9 shrink-0 self-stretch items-center justify-center rounded-xl text-sm leading-none ${undoDisabled ? 'text-[var(--muted)] opacity-30 cursor-not-allowed' : 'text-[var(--muted)] hover:bg-[var(--sidebar-hover)] hover:text-[var(--text)]'}`}
           >
             <IconUndo />
           </button>
         </Tooltip>
       </div>
+
+      {s.tool === 'colorPick' && s.img && (
+        <div className="sidebar-section p-4">
+          <div className="mb-3 flex items-center gap-2">
+            <div className="sidebar-title flex items-center gap-2">
+              <span className="sidebar-chip rounded-full px-2 py-0.5 text-[10px] font-medium">BG</span>
+              Color / Background
+            </div>
+          </div>
+
+          <div className="mb-3 flex items-center gap-3">
+            <div className="sidebar-caption shrink-0">Sample</div>
+            <div className="h-8 w-8 shrink-0 rounded-xl border border-[var(--sidebar-divider)]" style={{ backgroundColor: s.bgSampleColor ? `rgb(${s.bgSampleColor.r}, ${s.bgSampleColor.g}, ${s.bgSampleColor.b})` : 'transparent' }} />
+            <div className="sidebar-caption font-mono truncate">
+              {s.bgSampleColor ? `${s.bgSampleColor.r}, ${s.bgSampleColor.g}, ${s.bgSampleColor.b}` : 'No sample'}
+            </div>
+          </div>
+
+          <div className="mb-3">
+            <div className="sidebar-caption mb-1.5 pl-1">Tolerance</div>
+            <InputNumber size="small" value={s.colorPickTolerance} min={0} max={255} onChange={(v) => setS(prev => ({ ...prev, colorPickTolerance: clampTolerance(v) }))} className="w-full border-[var(--sidebar-divider)] bg-[var(--input-bg)] hover:border-[var(--sidebar-selected-border)]" />
+          </div>
+
+          <div className="grid grid-cols-2 gap-2 mb-2">
+            <Button size="small" type="primary" icon={<span className="text-xs font-mono">BG</span>} onClick={autoRemoveBackground}>Auto remove</Button>
+            <Button size="small" type={s.bgPickMode ? 'primary' : 'secondary'} icon={<span className="text-xs font-mono">BG</span>} onClick={() => setBackgroundPickMode(!s.bgPickMode)}>
+              {s.bgPickMode ? 'Picking…' : 'Pick color'}
+            </Button>
+          </div>
+          <div className="grid grid-cols-2 gap-2 mb-2">
+            <Button size="small" disabled={!hasBgSample} onClick={() => applyBackgroundRemoval()}>Apply sample</Button>
+            <Button size="small" icon={<IconRefresh />} onClick={resetEdits}>Reset image</Button>
+          </div>
+          {s.sel && (
+            <Button size="small" type="primary" status="danger" className="w-full" onClick={deleteSelection}>Remove selected</Button>
+          )}
+          {s.bgPickMode && (
+            <div className="sidebar-caption mt-2">Click the image in the viewport to sample a background color.</div>
+          )}
+          {!s.bgPickMode && !s.sel && (
+            <div className="sidebar-caption mt-2">Click an opaque pixel to select its connected region.</div>
+          )}
+        </div>
+      )}
 
       <div
         onDragOver={(e) => e.preventDefault()}
@@ -162,34 +183,16 @@ export default function SpriteSidebar({ spriteSheet }: SpriteSidebarProps) {
           <div className="sidebar-section p-4">
             <div className="mb-3 flex items-center gap-2">
               <div className="sidebar-title flex items-center gap-2">
-                <span className="sidebar-chip rounded-full px-2 py-0.5 text-[10px] font-medium">BG</span>
-                Remove background
-              </div>
-            </div>
-            <div className="mb-3 flex items-center gap-3">
-              <div className="sidebar-caption shrink-0">Sample</div>
-              <div className="h-8 w-8 rounded-xl border border-[var(--sidebar-divider)] bg-[var(--sidebar-muted)]" style={{ backgroundColor: s.bgSampleColor ? `rgb(${s.bgSampleColor.r}, ${s.bgSampleColor.g}, ${s.bgSampleColor.b})` : 'transparent' }} />
-              <div className="sidebar-caption font-mono">
-                {s.bgSampleColor ? `${s.bgSampleColor.r}, ${s.bgSampleColor.g}, ${s.bgSampleColor.b}` : 'No sample'}
+                <span className="sidebar-chip rounded-full px-2 py-0.5 text-[10px] font-medium">FX</span>
+                Clean edges
               </div>
             </div>
             <div className="mb-3">
-              <div className="sidebar-caption mb-1.5 pl-1">Tolerance</div>
-              <InputNumber size="small" value={s.bgRemovalTolerance} min={0} max={255} onChange={(v) => setS(prev => ({ ...prev, bgRemovalTolerance: clampTolerance(v) }))} className="w-full border-[var(--sidebar-divider)] bg-[var(--input-bg)] hover:border-[var(--sidebar-selected-border)]" />
+              <div className="sidebar-caption mb-1.5 pl-1">Passes (1–5)</div>
+              <InputNumber size="small" value={sharpenStrength} min={1} max={5} onChange={(v) => setSharpenStrength(Math.min(5, Math.max(1, Number(v) || 1)))} className="w-full border-[var(--sidebar-divider)] bg-[var(--input-bg)] hover:border-[var(--sidebar-selected-border)]" />
             </div>
-            <div className="grid grid-cols-2 gap-2 mb-2">
-              <Button size="small" type="primary" icon={<span className="text-xs font-mono">BG</span>} onClick={autoRemoveBackground}>Auto remove</Button>
-              <Button size="small" icon={<span className="text-xs font-mono">BG</span>} type={s.bgPickMode ? 'primary' : 'secondary'} onClick={() => setBackgroundPickMode(!s.bgPickMode)}>
-                {s.bgPickMode ? 'Picking…' : 'Pick color'}
-              </Button>
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <Button size="small" disabled={!hasBgSample} onClick={() => applyBackgroundRemoval()}>Apply sample</Button>
-              <Button size="small" icon={<IconRefresh />} onClick={resetEdits}>Reset image</Button>
-            </div>
-            {s.bgPickMode && (
-              <div className="sidebar-caption mt-2">Click the image in the viewport to sample a background color.</div>
-            )}
+            <Button size="small" type="primary" icon={<IconThunderbolt />} onClick={() => applySharpening(sharpenStrength)} className="w-full">Remove jaggies</Button>
+            <div className="sidebar-caption mt-2">{s.sel ? 'Applies to current selection.' : 'No selection — applies to full canvas.'}</div>
           </div>
 
           <div className="sidebar-section p-4">

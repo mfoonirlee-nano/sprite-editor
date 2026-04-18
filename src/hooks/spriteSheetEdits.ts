@@ -2,7 +2,7 @@ import type { Dispatch, RefObject, SetStateAction } from 'react'
 import { clampSelectionToBounds, cloneSelection, traceSelectionPath, translateSelection } from '../utils/selectionUtils'
 import type { Point } from '../types/selectionTypes'
 import type { DrawableSource, ResizeAnchor, RgbColor, SpriteState } from '../types/spriteSheetTypes'
-import { cloneColor, colorsAreSimilar, computeResizeOffset, createCanvas, findConnectedColorPixelsInImageData, findConnectedOpaqueBoundsInImageData, getSourceHeight, getSourceWidth, readColorAt } from '../utils/spriteSheetCanvasUtils'
+import { cleanEdgeJaggies, cloneColor, colorsAreSimilar, computeResizeOffset, createCanvas, findConnectedColorPixelsInImageData, findConnectedOpaqueBoundsInImageData, getSourceHeight, getSourceWidth, readColorAt } from '../utils/spriteSheetCanvasUtils'
 import { cloneDrawableSource, getReadableContext, type UndoSnapshot } from './spriteSheetCore'
 import { createSpriteSheetHistory } from './spriteSheetHistory'
 
@@ -98,7 +98,7 @@ export function createSpriteSheetEdits({
     if (!ctx) return
 
     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
-    const tolerance = Math.max(0, state.bgRemovalTolerance)
+    const tolerance = Math.max(0, state.colorPickTolerance)
     const data = imageData.data
     for (let i = 0; i < data.length; i += 4) {
       if (data[i + 3] === 0) continue
@@ -183,7 +183,7 @@ export function createSpriteSheetEdits({
     const ctx = getReadableContext(source, samplerCanvasRef)
     if (!ctx) return
 
-    const pixels = findConnectedColorPixelsInImageData(ctx.getImageData(0, 0, width, height), imgPt, state.bgRemovalTolerance)
+    const pixels = findConnectedColorPixelsInImageData(ctx.getImageData(0, 0, width, height), imgPt, state.colorPickTolerance)
     if (!pixels || pixels.length === 0) return
 
     const xs = pixels.map((p) => p.x)
@@ -200,6 +200,51 @@ export function createSpriteSheetEdits({
       selType: 'lasso',
       lassoDrawing: false,
       lassoPoints: [],
+    }))
+  }
+
+  const applySharpening = (iterations: number) => {
+    const source = getDrawableSource()
+    if (!source || state.movingSel) return
+
+    pushUndoSnapshot(state)
+    const canvas = cloneDrawableSource(source)
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
+
+    let selMask: Set<number> | undefined
+    const sel = state.sel
+    if (sel) {
+      selMask = new Set<number>()
+      if (sel.points?.length) {
+        for (const p of sel.points) {
+          selMask.add(Math.round(p.y) * canvas.width + Math.round(p.x))
+        }
+      } else {
+        const x0 = Math.floor(sel.x)
+        const y0 = Math.floor(sel.y)
+        const x1 = Math.ceil(sel.x + sel.w)
+        const y1 = Math.ceil(sel.y + sel.h)
+        for (let y = y0; y < y1; y++) {
+          for (let x = x0; x < x1; x++) {
+            selMask.add(y * canvas.width + x)
+          }
+        }
+      }
+    }
+
+    const cleaned = cleanEdgeJaggies(imageData, iterations, selMask)
+    ctx.putImageData(cleaned, 0, 0)
+
+    setState((prev) => ({
+      ...prev,
+      editCanvas: canvas,
+      floatingCanvas: null,
+      movingSel: false,
+      moveSelStart: null,
+      floatOffset: { x: 0, y: 0 },
     }))
   }
 
@@ -351,6 +396,7 @@ export function createSpriteSheetEdits({
     resetEdits,
     pickConnectedOpaqueRegion,
     pickConnectedColorRegion,
+    applySharpening,
     deleteSelection,
     resizeCanvas,
     setBackgroundSample,
