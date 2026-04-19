@@ -12,6 +12,11 @@ export interface ResizeAnchor {
   y: ResizeAnchorY
 }
 
+export interface Guide {
+  axis: 'x' | 'y'
+  position: number // image coordinates
+}
+
 export interface SpriteState {
   img: HTMLImageElement | null
   imgSrc: string
@@ -46,4 +51,5 @@ export interface SpriteState {
   bgSampleColor: RgbColor | null
   bgPickMode: boolean
   colorPickTolerance: number
+  guides: Guide[]
 }

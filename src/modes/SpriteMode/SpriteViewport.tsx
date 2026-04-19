@@ -3,6 +3,10 @@ import type { SpriteSheetController } from '../../hooks/useSpriteSheet'
 import { isPointInSelection } from '../../utils/selectionUtils'
 import { getSourceHeight, getSourceWidth } from '../../utils/spriteSheetCanvasUtils'
 
+const RULER_SIZE_LEFT = 40   // px, matches w-10
+const RULER_SIZE_BOTTOM = 24 // px, matches h-6
+const GUIDE_HIT_THRESHOLD = 6 // px, screen space
+
 const AXIS_STEPS = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024]
 
 function pickAxisStep(zoom: number, minSpacing: number) {
@@ -20,6 +24,8 @@ export default function SpriteViewport({ spriteSheet }: SpriteViewportProps) {
     mainRef,
     gridRef,
     selRef,
+    guidesRef,
+    draggingGuideRef,
     setZoomCenter,
     startMovingSelection,
     updateMovingSelection,
@@ -32,7 +38,11 @@ export default function SpriteViewport({ spriteSheet }: SpriteViewportProps) {
     deleteSelection,
   } = spriteSheet
   const [hoveringSelection, setHoveringSelection] = React.useState(false)
+  const [hoveringGuide, setHoveringGuide] = React.useState<{ axis: 'x' | 'y' } | null>(null)
   const [viewportSize, setViewportSize] = React.useState({ width: 0, height: 0 })
+  // Local state for dragging guide — drives cursor and passed to RAF via ref
+  const [draggingGuide, setDraggingGuide] = React.useState<{ axis: 'x' | 'y'; position: number } | null>(null)
+  const [hoverRuler, setHoverRuler] = React.useState<'x' | 'y' | null>(null)
   const selectionInfo = s.sel
     ? {
         width: Math.round(s.sel.w),
@@ -58,20 +68,55 @@ export default function SpriteViewport({ spriteSheet }: SpriteViewportProps) {
     if (!wrap) return
 
     const updateSize = () => {
-      setViewportSize({ width: wrap.clientWidth, height: wrap.clientHeight })
+      const w = wrap.clientWidth
+      const h = wrap.clientHeight
+      setViewportSize({ width: w, height: h })
+      if (guidesRef.current) {
+        guidesRef.current.width = w
+        guidesRef.current.height = h
+      }
     }
 
     updateSize()
     const observer = new ResizeObserver(updateSize)
     observer.observe(wrap)
     return () => observer.disconnect()
-  }, [mainRef])
+  }, [mainRef, guidesRef])
 
   const screenToImage = (sx: number, sy: number) => {
     const wrap = mainRef.current?.parentElement as HTMLElement | null
     if (!wrap) return { x: 0, y: 0 }
     const rect = wrap.getBoundingClientRect()
     return { x: (sx - rect.left - s.panX) / s.zoom, y: (sy - rect.top - s.panY) / s.zoom }
+  }
+
+  // Detect if pointer is in ruler zones (relative to viewport wrapper)
+  const getHitRuler = (clientX: number, clientY: number): 'x' | 'y' | null => {
+    const wrap = mainRef.current?.parentElement as HTMLElement | null
+    if (!wrap) return null
+    const rect = wrap.getBoundingClientRect()
+    const lx = clientX - rect.left
+    const ly = clientY - rect.top
+    if (lx < RULER_SIZE_LEFT) return 'x' // dragging from left ruler creates vertical guide
+    if (ly > rect.height - RULER_SIZE_BOTTOM) return 'y' // dragging from bottom ruler creates horizontal guide
+    return null
+  }
+
+  const findHitGuideIndex = (clientX: number, clientY: number): number => {
+    const wrap = mainRef.current?.parentElement as HTMLElement | null
+    if (!wrap) return -1
+    const rect = wrap.getBoundingClientRect()
+    const lx = clientX - rect.left
+    const ly = clientY - rect.top
+    return s.guides.findIndex((g) => {
+      if (g.axis === 'x') {
+        const sx = s.panX + g.position * s.zoom
+        return Math.abs(lx - sx) < GUIDE_HIT_THRESHOLD && lx >= RULER_SIZE_LEFT
+      } else {
+        const sy = s.panY + g.position * s.zoom
+        return Math.abs(ly - sy) < GUIDE_HIT_THRESHOLD && ly <= rect.height - RULER_SIZE_BOTTOM
+      }
+    })
   }
 
   const source = getDrawableSource()
@@ -161,6 +206,25 @@ export default function SpriteViewport({ spriteSheet }: SpriteViewportProps) {
         const currentTarget = e.currentTarget
         currentTarget.setPointerCapture(e.pointerId)
 
+        if (e.button === 0) {
+          const rulerAxis = getHitRuler(e.clientX, e.clientY)
+          if (rulerAxis) {
+            const pt = screenToImage(e.clientX, e.clientY)
+            const guide = { axis: rulerAxis, position: rulerAxis === 'x' ? pt.x : pt.y }
+            draggingGuideRef.current = guide
+            setDraggingGuide(guide)
+            return
+          }
+          const hitIdx = findHitGuideIndex(e.clientX, e.clientY)
+          if (hitIdx >= 0) {
+            const guide = s.guides[hitIdx]
+            setS((prev) => ({ ...prev, guides: prev.guides.filter((_, i) => i !== hitIdx) }))
+            draggingGuideRef.current = guide
+            setDraggingGuide(guide)
+            return
+          }
+        }
+
         const pt = screenToImage(e.clientX, e.clientY)
 
         if (s.bgPickMode && e.button === 0) {
@@ -187,6 +251,17 @@ export default function SpriteViewport({ spriteSheet }: SpriteViewportProps) {
         }
       }}
       onPointerMove={(e) => {
+        setHoverRuler(getHitRuler(e.clientX, e.clientY))
+        if (draggingGuide) {
+          setHoveringGuide(null)
+          const pt = screenToImage(e.clientX, e.clientY)
+          const guide = { axis: draggingGuide.axis, position: draggingGuide.axis === 'x' ? pt.x : pt.y }
+          draggingGuideRef.current = guide
+          setDraggingGuide(guide)
+          return
+        }
+        const hitGuideIdx = findHitGuideIndex(e.clientX, e.clientY)
+        setHoveringGuide(hitGuideIdx >= 0 ? s.guides[hitGuideIdx] : null)
         if (!s.img) return
         const pt = screenToImage(e.clientX, e.clientY)
         const isOverSelection = !!s.sel && isPointInSelection(pt, s.sel)
@@ -216,10 +291,18 @@ export default function SpriteViewport({ spriteSheet }: SpriteViewportProps) {
           setS((prev) => ({ ...prev, sel: { x: sx, y: sy, w: sw, h: sh } }))
         }
       }}
-      onPointerLeave={() => setHoveringSelection(false)}
+      onPointerLeave={() => { setHoveringSelection(false); setHoverRuler(null); setHoveringGuide(null) }}
       onPointerUp={(e) => {
         if (e.currentTarget.hasPointerCapture(e.pointerId)) {
           e.currentTarget.releasePointerCapture(e.pointerId)
+        }
+        if (draggingGuide) {
+          if (!getHitRuler(e.clientX, e.clientY)) {
+            setS((prev) => ({ ...prev, guides: [...prev.guides, draggingGuide] }))
+          }
+          draggingGuideRef.current = null
+          setDraggingGuide(null)
+          return
         }
         finishInteraction()
       }}
@@ -227,13 +310,19 @@ export default function SpriteViewport({ spriteSheet }: SpriteViewportProps) {
         if (e.currentTarget.hasPointerCapture(e.pointerId)) {
           e.currentTarget.releasePointerCapture(e.pointerId)
         }
+        if (draggingGuide) {
+          draggingGuideRef.current = null
+          setDraggingGuide(null)
+          return
+        }
         finishInteraction()
       }}
-      style={{ cursor: s.bgPickMode ? 'copy' : s.movingSel ? 'grabbing' : hoveringSelection ? 'grab' : s.tool === 'pan' ? (s.dragging ? 'grabbing' : 'grab') : s.tool === 'select' || s.tool === 'lasso' || s.tool === 'framePick' || s.tool === 'colorPick' ? 'crosshair' : 'default' }}
+      style={{ cursor: draggingGuide ? (draggingGuide.axis === 'x' ? 'col-resize' : 'row-resize') : hoverRuler ? (hoverRuler === 'x' ? 'col-resize' : 'row-resize') : hoveringGuide ? (hoveringGuide.axis === 'x' ? 'col-resize' : 'row-resize') : s.bgPickMode ? 'copy' : s.movingSel ? 'grabbing' : hoveringSelection ? 'grab' : s.tool === 'pan' ? (s.dragging ? 'grabbing' : 'grab') : s.tool === 'select' || s.tool === 'lasso' || s.tool === 'framePick' || s.tool === 'colorPick' ? 'crosshair' : 'default' }}
     >
       <canvas ref={mainRef} className="absolute origin-top-left shadow-[0_0_20px_rgba(0,0,0,0.5)]" style={{ imageRendering: 'pixelated' }} />
       <canvas ref={gridRef} className="absolute origin-top-left pointer-events-none" style={{ imageRendering: 'pixelated' }} />
       <canvas ref={selRef} className="absolute origin-top-left pointer-events-none" />
+      <canvas ref={guidesRef} className="absolute inset-0 pointer-events-none" />
 
       {source && (
         <div className="pointer-events-none absolute inset-0">

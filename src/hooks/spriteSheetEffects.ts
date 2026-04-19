@@ -14,6 +14,8 @@ interface SpriteSheetEffectsDeps {
   drawMain: () => void
   drawPreview: () => void
   drawSelCanvas: () => void
+  drawGuides: (draggingGuide?: { axis: 'x' | 'y'; position: number } | null) => void
+  draggingGuideRef: RefObject<{ axis: 'x' | 'y'; position: number } | null>
 }
 
 export function useSpriteSheetEffects({
@@ -27,6 +29,8 @@ export function useSpriteSheetEffects({
   drawMain,
   drawPreview,
   drawSelCanvas,
+  drawGuides,
+  draggingGuideRef,
 }: SpriteSheetEffectsDeps) {
   useEffect(() => {
     let id = 0
@@ -53,10 +57,11 @@ export function useSpriteSheetEffects({
       }
       drawPreview()
       drawSelCanvas()
+      drawGuides(draggingGuideRef.current)
     }
     id = requestAnimationFrame(loop)
     return () => cancelAnimationFrame(id)
-  }, [state.img, state.isPlaying, state.fps, state.currentFrame, state.timer, state.lastTime, state.sel, state.lassoDrawing, state.lassoPoints, state.antsOffset, state.fw, state.fh, state.fcount, state.ox, state.oy, state.editCanvas, state.floatingCanvas, state.floatOffset.x, state.floatOffset.y, state.movingSel, drawMain, drawPreview, drawSelCanvas, setState])
+  }, [state.img, state.isPlaying, state.fps, state.currentFrame, state.timer, state.lastTime, state.sel, state.lassoDrawing, state.lassoPoints, state.antsOffset, state.fw, state.fh, state.fcount, state.ox, state.oy, state.editCanvas, state.floatingCanvas, state.floatOffset.x, state.floatOffset.y, state.movingSel, state.guides, state.panX, state.panY, state.zoom, drawMain, drawPreview, drawSelCanvas, drawGuides, draggingGuideRef, setState])
 
   useEffect(() => {
     const timer = setInterval(

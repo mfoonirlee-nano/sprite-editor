@@ -130,7 +130,7 @@ export default function SpriteRightPanel({ collapsed, onToggleCollapsed, spriteS
                   </div>
                   <div>
                     <div className="sidebar-caption mb-1.5 pl-1">Frames</div>
-                    <InputNumber size="small" value={s.fcount} onChange={(v) => { setS(prev => ({ ...prev, fcount: clampPositive(v, MinimumPositiveValue), currentFrame: Math.min(prev.currentFrame, clampPositive(v, MinimumPositiveValue) - 1) })) }} className="border-[var(--sidebar-divider)] bg-[var(--input-bg)] hover:border-[var(--sidebar-selected-border)]" />
+                    <InputNumber size="small" value={s.fcount} onChange={(v) => { setS(prev => { const source = getDrawableSource(prev); const imgWidth = source ? getSourceWidth(source) : null; const fcount = clampPositive(v, MinimumPositiveValue); const fw = imgWidth ? Math.max(1, Math.floor(imgWidth / fcount)) : prev.fw; return { ...prev, fcount, fw, currentFrame: Math.min(prev.currentFrame, fcount - 1) } }) }} className="border-[var(--sidebar-divider)] bg-[var(--input-bg)] hover:border-[var(--sidebar-selected-border)]" />
                   </div>
                   <div>
                     <div className="sidebar-caption mb-1.5 pl-1">FPS</div>

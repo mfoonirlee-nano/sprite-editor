@@ -10,6 +10,7 @@ interface SpriteSheetRenderingDeps {
   mainRef: RefObject<HTMLCanvasElement | null>
   gridRef: RefObject<HTMLCanvasElement | null>
   selRef: RefObject<HTMLCanvasElement | null>
+  guidesRef: RefObject<HTMLCanvasElement | null>
   previewRef: RefObject<HTMLCanvasElement | null>
   getDrawableSource: (state?: SpriteState) => DrawableSource | null
 }
@@ -20,6 +21,7 @@ export function createSpriteSheetRendering({
   mainRef,
   gridRef,
   selRef,
+  guidesRef,
   previewRef,
   getDrawableSource,
 }: SpriteSheetRenderingDeps) {
@@ -171,5 +173,73 @@ export function createSpriteSheetRendering({
     ctx.restore()
   }
 
-  return { fitView, setZoomCenter, drawMain, drawPreview, updateGridCanvas, drawSelCanvas }
+  const drawGuides = (draggingGuide?: { axis: 'x' | 'y'; position: number } | null) => {
+    const canvas = guidesRef.current
+    if (!canvas) return
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+    ctx.clearRect(0, 0, canvas.width, canvas.height)
+
+    const all = draggingGuide
+      ? [...state.guides, draggingGuide]
+      : state.guides
+    if (all.length === 0) return
+
+    const GUIDE_COLOR = 'rgba(255, 80, 80, 0.9)'
+    const RULER_LEFT = 40
+    const RULER_BOTTOM = 24
+
+    ctx.save()
+    ctx.strokeStyle = GUIDE_COLOR
+    ctx.lineWidth = 1
+    ctx.setLineDash([4, 3])
+    for (const g of all) {
+      ctx.beginPath()
+      if (g.axis === 'x') {
+        const sx = Math.round(state.panX + g.position * state.zoom) + 0.5
+        ctx.moveTo(sx, 0)
+        ctx.lineTo(sx, canvas.height)
+      } else {
+        const sy = Math.round(state.panY + g.position * state.zoom) + 0.5
+        ctx.moveTo(0, sy)
+        ctx.lineTo(canvas.width, sy)
+      }
+      ctx.stroke()
+    }
+    ctx.restore()
+
+    ctx.save()
+    ctx.font = '10px monospace'
+    ctx.textBaseline = 'bottom'
+    for (const g of all) {
+      if (g.axis === 'x' && state.fw > 0) {
+        const sx = Math.round(state.panX + g.position * state.zoom) + 0.5
+        const rel = ((g.position - state.ox) % state.fw + state.fw) % state.fw
+        const dist = Math.round(Math.min(rel, state.fw - rel))
+        const label = String(dist)
+        const tw = ctx.measureText(label).width
+        const lx = sx + 4
+        const ly = canvas.height - RULER_BOTTOM - 4
+        ctx.fillStyle = 'rgba(20, 20, 30, 0.75)'
+        ctx.fillRect(lx - 1, ly - 12, tw + 4, 14)
+        ctx.fillStyle = GUIDE_COLOR
+        ctx.fillText(label, lx + 1, ly)
+      } else if (g.axis === 'y' && state.fh > 0) {
+        const sy = Math.round(state.panY + g.position * state.zoom) + 0.5
+        const rel = ((g.position - state.oy) % state.fh + state.fh) % state.fh
+        const dist = Math.round(Math.min(rel, state.fh - rel))
+        const label = String(dist)
+        const tw = ctx.measureText(label).width
+        const lx = RULER_LEFT + 4
+        const ly = sy - 3
+        ctx.fillStyle = 'rgba(20, 20, 30, 0.75)'
+        ctx.fillRect(lx - 1, ly - 12, tw + 4, 14)
+        ctx.fillStyle = GUIDE_COLOR
+        ctx.fillText(label, lx + 1, ly)
+      }
+    }
+    ctx.restore()
+  }
+
+  return { fitView, setZoomCenter, drawMain, drawPreview, updateGridCanvas, drawSelCanvas, drawGuides }
 }

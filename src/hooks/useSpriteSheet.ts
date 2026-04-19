@@ -1,17 +1,18 @@
-import { useRef, useState } from 'react'
+import React, { useRef, useState } from 'react'
 import { MaxUndoSnapshots } from '../constants/spriteSheetConstants'
 import { createInitialSpriteState, getDrawableSource as getSourceFromState, revokeObjectUrl, syncCanvasSizes as syncSizes, type SpriteCanvasRefs, type UndoSnapshot } from './spriteSheetCore'
 import { createSpriteSheetEdits } from './spriteSheetEdits'
 import { useSpriteSheetEffects } from './spriteSheetEffects'
 import { createSpriteSheetRendering } from './spriteSheetRendering'
 
-export function useSpriteSheet() {
+export function useSpriteSheet(draggingGuideRef: React.RefObject<{ axis: 'x' | 'y'; position: number } | null>) {
   const [canUndo, setCanUndo] = useState(false)
   const [s, setS] = useState(createInitialSpriteState)
 
   const mainRef = useRef<HTMLCanvasElement | null>(null)
   const gridRef = useRef<HTMLCanvasElement | null>(null)
   const selRef = useRef<HTMLCanvasElement | null>(null)
+  const guidesRef = useRef<HTMLCanvasElement | null>(null)
   const previewRef = useRef<HTMLCanvasElement | null>(null)
   const objectUrlRef = useRef<string | null>(null)
   const undoStackRef = useRef<UndoSnapshot[]>([])
@@ -27,6 +28,7 @@ export function useSpriteSheet() {
     mainRef,
     gridRef,
     selRef,
+    guidesRef,
     previewRef,
     getDrawableSource,
   })
@@ -52,6 +54,8 @@ export function useSpriteSheet() {
     drawMain: rendering.drawMain,
     drawPreview: rendering.drawPreview,
     drawSelCanvas: rendering.drawSelCanvas,
+    drawGuides: rendering.drawGuides,
+    draggingGuideRef,
   })
 
   const loadImage = (src: string) => {
@@ -128,7 +132,10 @@ export function useSpriteSheet() {
     mainRef,
     gridRef,
     selRef,
+    guidesRef,
     previewRef,
+    drawGuides: rendering.drawGuides,
+    draggingGuideRef,
     loadImage,
     fitView: rendering.fitView,
     setZoomCenter: rendering.setZoomCenter,

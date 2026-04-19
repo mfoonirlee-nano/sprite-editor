@@ -10,7 +10,8 @@ const { Header, Sider, Content } = Layout
 const { Title } = Typography
 
 export default function App() {
-  const spriteSheet = useSpriteSheet()
+  const draggingGuideRef = React.useRef<{ axis: 'x' | 'y'; position: number } | null>(null)
+  const spriteSheet = useSpriteSheet(draggingGuideRef)
   const [isRightPanelCollapsed, setIsRightPanelCollapsed] = React.useState(false)
 
   React.useEffect(() => {

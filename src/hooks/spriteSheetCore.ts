@@ -56,6 +56,7 @@ export function createInitialSpriteState(): SpriteState {
     bgSampleColor: null,
     bgPickMode: false,
     colorPickTolerance: DefaultColorPickTolerance,
+    guides: [],
   }
 }
 
