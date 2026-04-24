@@ -316,6 +316,36 @@ export function createSpriteSheetEdits({
     }))
   }
 
+  const scaleImage = (targetWidth: number, targetHeight: number) => {
+    const source = getDrawableSource()
+    if (!source || state.movingSel) return
+
+    pushUndoSnapshot(state)
+    const nextWidth = Math.max(1, Math.round(targetWidth))
+    const nextHeight = Math.max(1, Math.round(targetHeight))
+    const scaledCanvas = createCanvas(nextWidth, nextHeight)
+    const ctx = scaledCanvas.getContext('2d')
+    if (!ctx) return
+
+    ctx.drawImage(source, 0, 0, nextWidth, nextHeight)
+    syncCanvasSizes(scaledCanvas)
+    setState((prev) => ({
+      ...prev,
+      editCanvas: scaledCanvas,
+      sel: null,
+      selStart: null,
+      lassoDrawing: false,
+      lassoPoints: [],
+      dragging: false,
+      panStart: null,
+      movingSel: false,
+      moveSelStart: null,
+      floatingCanvas: null,
+      floatOffset: { x: 0, y: 0 },
+      bgPickMode: false,
+    }))
+  }
+
   const startMovingSelection = (imgPt: Point) => {
     const sel = state.sel
     const source = getDrawableSource()
@@ -404,6 +434,7 @@ export function createSpriteSheetEdits({
     sampleBackgroundColorAt,
     autoRemoveBackground,
     applyBackgroundRemoval,
+    scaleImage,
     startMovingSelection,
     updateMovingSelection,
     commitMovingSelection,

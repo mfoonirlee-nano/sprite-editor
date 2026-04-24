@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { Button, InputNumber, Tooltip } from '@arco-design/web-react'
-import { IconDragArrow, IconDragDotVertical, IconFullscreen, IconNav, IconPenFill, IconRefresh, IconSelectAll, IconThunderbolt, IconUndo, IconUpload } from '@arco-design/web-react/icon'
+import { IconDragArrow, IconDragDotVertical, IconExpand, IconFullscreen, IconLink, IconNav, IconPenFill, IconRefresh, IconSelectAll, IconThunderbolt, IconUndo, IconUpload } from '@arco-design/web-react/icon'
 import { DefaultResizeAnchor, MaxColorChannelValue, MinimumPositiveValue, ResizeAnchorColumns, ResizeAnchorRows } from '../../constants/spriteSheetConstants'
 import type { SpriteSheetController } from '../../hooks/useSpriteSheet'
 import type { ResizeAnchor } from '../../types/spriteSheetTypes'
@@ -27,6 +27,7 @@ export default function SpriteSidebar({ spriteSheet }: SpriteSidebarProps) {
     undo,
     resetEdits,
     resizeCanvas,
+    scaleImage,
   } = spriteSheet
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [resizeWidth, setResizeWidth] = useState(1)
@@ -68,6 +69,45 @@ export default function SpriteSidebar({ spriteSheet }: SpriteSidebarProps) {
     setResizeWidth(width)
     setResizeHeight(height)
   }, [s.editCanvas, s.img])
+
+  const [scaleWidth, setScaleWidth] = useState(1)
+  const [scaleHeight, setScaleHeight] = useState(1)
+  const [lockAspect, setLockAspect] = useState(true)
+
+  useEffect(() => {
+    const source = s.editCanvas ?? s.img
+    if (!source) return
+    const width = 'naturalWidth' in source ? source.naturalWidth : source.width
+    const height = 'naturalHeight' in source ? source.naturalHeight : source.height
+    setScaleWidth(width)
+    setScaleHeight(height)
+  }, [s.editCanvas, s.img])
+
+  const handleScaleWidthChange = (v: number | null | undefined) => {
+    const next = clampPositive(v, scaleWidth)
+    if (lockAspect) {
+      const source = s.editCanvas ?? s.img
+      if (source) {
+        const srcW = 'naturalWidth' in source ? source.naturalWidth : source.width
+        const srcH = 'naturalHeight' in source ? source.naturalHeight : source.height
+        setScaleHeight(Math.max(1, Math.round((next / srcW) * srcH)))
+      }
+    }
+    setScaleWidth(next)
+  }
+
+  const handleScaleHeightChange = (v: number | null | undefined) => {
+    const next = clampPositive(v, scaleHeight)
+    if (lockAspect) {
+      const source = s.editCanvas ?? s.img
+      if (source) {
+        const srcW = 'naturalWidth' in source ? source.naturalWidth : source.width
+        const srcH = 'naturalHeight' in source ? source.naturalHeight : source.height
+        setScaleWidth(Math.max(1, Math.round((next / srcH) * srcW)))
+      }
+    }
+    setScaleHeight(next)
+  }
 
   const [sharpenStrength, setSharpenStrength] = useState(1)
   const hasBgSample = !!s.bgSampleColor
@@ -233,6 +273,38 @@ export default function SpriteSidebar({ spriteSheet }: SpriteSidebarProps) {
             </Button>
             {s.movingSel && (
               <div className="sidebar-caption mt-2">Finish moving the selection before resizing the canvas.</div>
+            )}
+          </div>
+
+          <div className="sidebar-section p-4">
+            <div className="sidebar-title mb-3 flex items-center gap-2">
+              <IconExpand className="text-[var(--muted)]" />
+              Scale image
+            </div>
+            <div className="mb-3 grid grid-cols-[1fr_auto_1fr] items-end gap-2">
+              <div>
+                <div className="sidebar-caption mb-1.5 pl-1">Width</div>
+                <InputNumber size="small" value={scaleWidth} min={1} onChange={handleScaleWidthChange} className="border-[var(--sidebar-divider)] bg-[var(--input-bg)] hover:border-[var(--sidebar-selected-border)]" />
+              </div>
+              <Tooltip content={lockAspect ? 'Unlock aspect ratio' : 'Lock aspect ratio'}>
+                <button
+                  type="button"
+                  className={`sidebar-interactive mb-0.5 flex h-7 w-7 items-center justify-center rounded-lg border text-sm ${lockAspect ? 'border-[var(--sidebar-selected-border)] bg-[var(--sidebar-selected)] text-[var(--accent)]' : 'border-[var(--sidebar-divider)] bg-[var(--input-bg)] text-[var(--muted)] hover:border-[var(--sidebar-selected-border)] hover:text-[var(--text)]'}`}
+                  onClick={() => setLockAspect(v => !v)}
+                >
+                  <IconLink />
+                </button>
+              </Tooltip>
+              <div>
+                <div className="sidebar-caption mb-1.5 pl-1">Height</div>
+                <InputNumber size="small" value={scaleHeight} min={1} onChange={handleScaleHeightChange} className="border-[var(--sidebar-divider)] bg-[var(--input-bg)] hover:border-[var(--sidebar-selected-border)]" />
+              </div>
+            </div>
+            <Button size="small" type="primary" disabled={resizeDisabled} icon={<IconExpand />} onClick={() => scaleImage(scaleWidth, scaleHeight)} className="w-full">
+              Scale image
+            </Button>
+            {s.movingSel && (
+              <div className="sidebar-caption mt-2">Finish moving the selection before scaling.</div>
             )}
           </div>
         </>

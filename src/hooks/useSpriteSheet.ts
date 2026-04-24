@@ -156,6 +156,7 @@ export function useSpriteSheet(draggingGuideRef: React.RefObject<{ axis: 'x' | '
     updateMovingSelection: edits.updateMovingSelection,
     commitMovingSelection: edits.commitMovingSelection,
     resizeCanvas: edits.resizeCanvas,
+    scaleImage: edits.scaleImage,
   }
 }
 

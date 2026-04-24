@@ -1,4 +1,5 @@
-import { Button, InputNumber, Switch, Tooltip } from '@arco-design/web-react'
+import React from 'react'
+import { Button, Input, InputNumber, Switch, Tooltip } from '@arco-design/web-react'
 import { IconDownload, IconDragDotVertical, IconLeft, IconPause, IconPlayArrow, IconRight } from '@arco-design/web-react/icon'
 import { DefaultFrameHeight, DefaultFrameWidth, DefaultFramesPerSecond, MinimumPositiveValue } from '../../constants/spriteSheetConstants'
 import type { SpriteSheetController } from '../../hooks/useSpriteSheet'
@@ -30,6 +31,8 @@ export default function SpriteRightPanel({ collapsed, onToggleCollapsed, spriteS
     getDrawableSource,
   } = spriteSheet
 
+  const [exportFilename, setExportFilename] = React.useState('sprite')
+
   const hasExportableSelection = !!s.sel && Math.round(s.sel.w) > 0 && Math.round(s.sel.h) > 0
 
   const exportSelection = () => {
@@ -51,7 +54,8 @@ export default function SpriteRightPanel({ collapsed, onToggleCollapsed, spriteS
       ctx.drawImage(source, s.sel.x, s.sel.y, s.sel.w, s.sel.h, 0, 0, s.sel.w, s.sel.h)
     }
 
-    downloadCanvas(canvas, 'selection.png')
+    const base = exportFilename.trim() || 'sprite'
+    downloadCanvas(canvas, `${base}_selection.png`)
   }
 
   const exportFrame = () => {
@@ -67,7 +71,8 @@ export default function SpriteRightPanel({ collapsed, onToggleCollapsed, spriteS
     const col = s.currentFrame % columns
     const row = Math.floor(s.currentFrame / columns)
     ctx.drawImage(source, s.ox + col * s.fw, s.oy + row * s.fh, s.fw, s.fh, 0, 0, s.fw, s.fh)
-    downloadCanvas(canvas, `frame_${s.currentFrame}.png`)
+    const base = exportFilename.trim() || 'sprite'
+    downloadCanvas(canvas, `${base}_frame_${s.currentFrame}.png`)
   }
 
   const exportFullImage = () => {
@@ -79,7 +84,8 @@ export default function SpriteRightPanel({ collapsed, onToggleCollapsed, spriteS
     const ctx = canvas.getContext('2d')
     if (!ctx) return
     ctx.drawImage(source, 0, 0)
-    downloadCanvas(canvas, 'sprite_sheet.png')
+    const base = exportFilename.trim() || 'sprite'
+    downloadCanvas(canvas, `${base}.png`)
   }
 
   return (
@@ -210,10 +216,22 @@ export default function SpriteRightPanel({ collapsed, onToggleCollapsed, spriteS
 
               <div className="border-t border-[var(--sidebar-divider)] px-1 pt-1">
                 <div className="sidebar-caption mb-3 px-3">Export</div>
-                <div className="grid grid-cols-2 gap-2 rounded-[18px] border border-[var(--sidebar-divider)] bg-[var(--sidebar-elevated)] p-3">
-                  <Button size="small" icon={<IconDownload />} onClick={exportSelection} disabled={!hasExportableSelection} className="border-[var(--sidebar-divider)] bg-[var(--input-bg)] text-[var(--text)] hover:bg-[var(--sidebar-hover)]">Selection</Button>
-                  <Button size="small" icon={<IconDownload />} onClick={exportFrame} className="border-[var(--sidebar-divider)] bg-[var(--input-bg)] text-[var(--text)] hover:bg-[var(--sidebar-hover)]">Current</Button>
-                  <Button size="small" icon={<IconDownload />} onClick={exportFullImage} className="col-span-2 border-[var(--sidebar-divider)] bg-[var(--input-bg)] text-[var(--text)] hover:bg-[var(--sidebar-hover)]">Full sheet</Button>
+                <div className="rounded-[18px] border border-[var(--sidebar-divider)] bg-[var(--sidebar-elevated)] p-3">
+                  <div className="mb-2">
+                    <div className="sidebar-caption mb-1.5 pl-1">Filename</div>
+                    <Input
+                      size="small"
+                      value={exportFilename}
+                      onChange={setExportFilename}
+                      suffix={<span className="text-[var(--muted)] text-xs">.png</span>}
+                      className="border-[var(--sidebar-divider)] bg-[var(--input-bg)] hover:border-[var(--sidebar-selected-border)]"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button size="small" icon={<IconDownload />} onClick={exportSelection} disabled={!hasExportableSelection} className="border-[var(--sidebar-divider)] bg-[var(--input-bg)] text-[var(--text)] hover:bg-[var(--sidebar-hover)]">Selection</Button>
+                    <Button size="small" icon={<IconDownload />} onClick={exportFrame} className="border-[var(--sidebar-divider)] bg-[var(--input-bg)] text-[var(--text)] hover:bg-[var(--sidebar-hover)]">Current</Button>
+                    <Button size="small" icon={<IconDownload />} onClick={exportFullImage} className="col-span-2 border-[var(--sidebar-divider)] bg-[var(--input-bg)] text-[var(--text)] hover:bg-[var(--sidebar-hover)]">Full sheet</Button>
+                  </div>
                 </div>
               </div>
             </div>
