@@ -99,17 +99,46 @@ export function createSpriteSheetEdits({
 
     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
     const tolerance = Math.max(0, state.colorPickTolerance)
-    const data = imageData.data
-    for (let i = 0; i < data.length; i += 4) {
-      if (data[i + 3] === 0) continue
+    const { width, height, data } = imageData
+
+    // Flood fill from all edge pixels to find background-connected pixels,
+    // so that interior elements with the same color are preserved.
+    const visited = new Uint8Array(width * height)
+    const queue: Array<[number, number]> = []
+
+    const enqueue = (x: number, y: number) => {
+      const idx = y * width + x
+      if (visited[idx]) return
+      visited[idx] = 1
+      const i = idx * 4
+      if (data[i + 3] === 0) return
       if (
         Math.abs(data[i] - targetColor.r) <= tolerance &&
         Math.abs(data[i + 1] - targetColor.g) <= tolerance &&
         Math.abs(data[i + 2] - targetColor.b) <= tolerance
       ) {
-        data[i + 3] = 0
+        queue.push([x, y])
       }
     }
+
+    for (let x = 0; x < width; x++) {
+      enqueue(x, 0)
+      enqueue(x, height - 1)
+    }
+    for (let y = 1; y < height - 1; y++) {
+      enqueue(0, y)
+      enqueue(width - 1, y)
+    }
+
+    for (let qi = 0; qi < queue.length; qi++) {
+      const [x, y] = queue[qi]
+      data[(y * width + x) * 4 + 3] = 0
+      if (x > 0) enqueue(x - 1, y)
+      if (x < width - 1) enqueue(x + 1, y)
+      if (y > 0) enqueue(x, y - 1)
+      if (y < height - 1) enqueue(x, y + 1)
+    }
+
     ctx.putImageData(imageData, 0, 0)
 
     setState((prev) => ({
