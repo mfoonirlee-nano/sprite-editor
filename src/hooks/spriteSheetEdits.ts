@@ -139,37 +139,52 @@ export function createSpriteSheetEdits({
       if (y < height - 1) enqueue(x, y + 1)
     }
 
-    // Defringe: anti-aliased edge pixels are blends of background + sprite color.
-    // For each opaque pixel bordering a transparent pixel, fade its alpha
-    // proportional to how close it is to the background color.
-    // Run 2 passes so newly-exposed edge pixels also get cleaned.
-    for (let pass = 0; pass < 2; pass++) {
-      for (let y = 0; y < height; y++) {
-        for (let x = 0; x < width; x++) {
-          const i = (y * width + x) * 4
-          if (data[i + 3] === 0) continue
-          const bordersTransparent =
-            (x > 0 && data[i - 4 + 3] === 0) ||
-            (x < width - 1 && data[i + 4 + 3] === 0) ||
-            (y > 0 && data[i - width * 4 + 3] === 0) ||
-            (y < height - 1 && data[i + width * 4 + 3] === 0)
-          if (!bordersTransparent) continue
-          const dr = Math.abs(data[i] - targetColor.r)
-          const dg = Math.abs(data[i + 1] - targetColor.g)
-          const db = Math.abs(data[i + 2] - targetColor.b)
-          const maxDist = Math.max(dr, dg, db)
-          // Pixels within [0, tolerance] of background get fully removed;
-          // pixels within [tolerance, tolerance*2] get proportionally faded.
-          const fadeRange = tolerance + 1
-          if (maxDist <= fadeRange * 2) {
-            const t = Math.max(0, maxDist - fadeRange) / fadeRange
-            data[i + 3] = Math.round(data[i + 3] * t)
-          }
-        }
+    // BFS defringe: anti-aliased edge pixels are blends of background + sprite color,
+    // so they survive the main flood fill. Start a second BFS from the transparency
+    // boundary and remove opaque neighbors within an expanded tolerance.
+    // This propagates inward correctly, unlike a linear scan.
+    const fringeTolerance = tolerance + 24
+    const fringeVisited = new Uint8Array(width * height)
+    const fringeQueue: Array<[number, number]> = []
+
+    const enqueueFringe = (x: number, y: number) => {
+      const idx = y * width + x
+      if (fringeVisited[idx]) return
+      fringeVisited[idx] = 1
+      const i = idx * 4
+      if (data[i + 3] === 0) return
+      if (
+        Math.abs(data[i] - targetColor.r) <= fringeTolerance &&
+        Math.abs(data[i + 1] - targetColor.g) <= fringeTolerance &&
+        Math.abs(data[i + 2] - targetColor.b) <= fringeTolerance
+      ) {
+        fringeQueue.push([x, y])
       }
     }
 
-    ctx.putImageData(imageData, 0, 0)
+    // Seed: all opaque pixels adjacent to the transparency created by the flood fill
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) {
+        if (data[(y * width + x) * 4 + 3] !== 0) continue
+        if (x > 0) enqueueFringe(x - 1, y)
+        if (x < width - 1) enqueueFringe(x + 1, y)
+        if (y > 0) enqueueFringe(x, y - 1)
+        if (y < height - 1) enqueueFringe(x, y + 1)
+      }
+    }
+
+    for (let qi = 0; qi < fringeQueue.length; qi++) {
+      const [x, y] = fringeQueue[qi]
+      data[(y * width + x) * 4 + 3] = 0
+      if (x > 0) enqueueFringe(x - 1, y)
+      if (x < width - 1) enqueueFringe(x + 1, y)
+      if (y > 0) enqueueFringe(x, y - 1)
+      if (y < height - 1) enqueueFringe(x, y + 1)
+    }
+
+    // Final pass: remove isolated spike pixels (≤1 opaque neighbor)
+    const cleaned = cleanEdgeJaggies(imageData, 1)
+    ctx.putImageData(cleaned, 0, 0)
 
     setState((prev) => ({
       ...prev,
