@@ -2,7 +2,7 @@ import type { Dispatch, RefObject, SetStateAction } from 'react'
 import { clampSelectionToBounds, cloneSelection, traceSelectionPath, translateSelection } from '../utils/selectionUtils'
 import type { Point } from '../types/selectionTypes'
 import type { DrawableSource, ResizeAnchor, RgbColor, SpriteState } from '../types/spriteSheetTypes'
-import { cleanEdgeJaggies, cloneColor, colorsAreSimilar, computeResizeOffset, createCanvas, findConnectedColorPixelsInImageData, findConnectedOpaqueBoundsInImageData, getSourceHeight, getSourceWidth, readColorAt } from '../utils/spriteSheetCanvasUtils'
+import { cleanEdgeJaggies, cloneColor, colorsAreSimilar, computeResizeOffset, createCanvas, defringeAndCleanEdges, findConnectedColorPixelsInImageData, findConnectedOpaqueBoundsInImageData, getSourceHeight, getSourceWidth, readColorAt } from '../utils/spriteSheetCanvasUtils'
 import { cloneDrawableSource, getReadableContext, type UndoSnapshot } from './spriteSheetCore'
 import { createSpriteSheetHistory } from './spriteSheetHistory'
 
@@ -139,51 +139,7 @@ export function createSpriteSheetEdits({
       if (y < height - 1) enqueue(x, y + 1)
     }
 
-    // BFS defringe: anti-aliased edge pixels are blends of background + sprite color,
-    // so they survive the main flood fill. Start a second BFS from the transparency
-    // boundary and remove opaque neighbors within an expanded tolerance.
-    // This propagates inward correctly, unlike a linear scan.
-    const fringeTolerance = tolerance + 24
-    const fringeVisited = new Uint8Array(width * height)
-    const fringeQueue: Array<[number, number]> = []
-
-    const enqueueFringe = (x: number, y: number) => {
-      const idx = y * width + x
-      if (fringeVisited[idx]) return
-      fringeVisited[idx] = 1
-      const i = idx * 4
-      if (data[i + 3] === 0) return
-      if (
-        Math.abs(data[i] - targetColor.r) <= fringeTolerance &&
-        Math.abs(data[i + 1] - targetColor.g) <= fringeTolerance &&
-        Math.abs(data[i + 2] - targetColor.b) <= fringeTolerance
-      ) {
-        fringeQueue.push([x, y])
-      }
-    }
-
-    // Seed: all opaque pixels adjacent to the transparency created by the flood fill
-    for (let y = 0; y < height; y++) {
-      for (let x = 0; x < width; x++) {
-        if (data[(y * width + x) * 4 + 3] !== 0) continue
-        if (x > 0) enqueueFringe(x - 1, y)
-        if (x < width - 1) enqueueFringe(x + 1, y)
-        if (y > 0) enqueueFringe(x, y - 1)
-        if (y < height - 1) enqueueFringe(x, y + 1)
-      }
-    }
-
-    for (let qi = 0; qi < fringeQueue.length; qi++) {
-      const [x, y] = fringeQueue[qi]
-      data[(y * width + x) * 4 + 3] = 0
-      if (x > 0) enqueueFringe(x - 1, y)
-      if (x < width - 1) enqueueFringe(x + 1, y)
-      if (y > 0) enqueueFringe(x, y - 1)
-      if (y < height - 1) enqueueFringe(x, y + 1)
-    }
-
-    // Final pass: remove isolated spike pixels (≤1 opaque neighbor)
-    const cleaned = cleanEdgeJaggies(imageData, 1)
+    const cleaned = defringeAndCleanEdges(imageData, targetColor, tolerance)
     ctx.putImageData(cleaned, 0, 0)
 
     setState((prev) => ({
@@ -332,15 +288,59 @@ export function createSpriteSheetEdits({
     const ctx = canvas.getContext('2d')
     if (!ctx) return
 
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
+    const { width, data } = imageData
+
+    // Sample the average color of the pixels being deleted so we can use it as the
+    // defringe reference color — boundary pixels that remain will have this color
+    // mixed in from anti-aliasing and need to be decontaminated.
+    // Also build a seedMask marking WHICH pixels are being deleted, so defringe only
+    // processes the boundary of the selection — not pre-existing transparency elsewhere.
+    const seedMask = new Uint8Array(width * imageData.height)
+    let totalR = 0, totalG = 0, totalB = 0, sampleCount = 0
+
     if (sel.points?.length) {
-      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
+      for (const { x, y } of sel.points) {
+        const idx = Math.round(y) * width + Math.round(x)
+        const i = idx * 4
+        if (data[i + 3] > 0) { totalR += data[i]; totalG += data[i + 1]; totalB += data[i + 2]; sampleCount++ }
+      }
       sel.points.forEach(({ x, y }) => {
-        const idx = (Math.round(y) * canvas.width + Math.round(x)) * 4
-        imageData.data[idx + 3] = 0
+        const idx = Math.round(y) * width + Math.round(x)
+        data[idx * 4 + 3] = 0
+        seedMask[idx] = 1
       })
-      ctx.putImageData(imageData, 0, 0)
     } else {
-      ctx.clearRect(sel.x, sel.y, sel.w, sel.h)
+      const x0 = Math.floor(sel.x), y0 = Math.floor(sel.y)
+      const x1 = Math.ceil(sel.x + sel.w), y1 = Math.ceil(sel.y + sel.h)
+      for (let y = y0; y < y1; y++) {
+        for (let x = x0; x < x1; x++) {
+          const i = (y * width + x) * 4
+          if (data[i + 3] > 0) { totalR += data[i]; totalG += data[i + 1]; totalB += data[i + 2]; sampleCount++ }
+        }
+      }
+      for (let y = y0; y < y1; y++) {
+        for (let x = x0; x < x1; x++) {
+          const idx = y * width + x
+          data[idx * 4 + 3] = 0
+          seedMask[idx] = 1
+        }
+      }
+    }
+
+    // Defringe boundary pixels using the sampled deleted color as reference.
+    // Pass seedMask so ONLY the just-deleted pixels serve as BFS seeds —
+    // pre-existing transparency elsewhere in the image won't trigger defringe.
+    if (sampleCount > 0) {
+      const deletedColor = {
+        r: Math.round(totalR / sampleCount),
+        g: Math.round(totalG / sampleCount),
+        b: Math.round(totalB / sampleCount),
+      }
+      const cleaned = defringeAndCleanEdges(imageData, deletedColor, 0, seedMask)
+      ctx.putImageData(cleaned, 0, 0)
+    } else {
+      ctx.putImageData(imageData, 0, 0)
     }
 
     setState((prev) => ({
